@@ -2,7 +2,7 @@ name: rohan-nginx
 replicas: 1
 
 image: nginx
-dockercfg: ${artifact.source.dockerconfig}
+
 
 createNamespace: true
 namespace: ${infra.kubernetes.namespace}

@@ -5,7 +5,7 @@ image: nginx
 
 
 createNamespace: true
-namespace: ${infra.kubernetes.namespace}
+namespace: rohan-dev
 
 # Service Type allow you to specify what kind of service you want.
 # Possible values for ServiceType are:

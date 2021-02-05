@@ -1,7 +1,7 @@
 name: rohan-nginx
 replicas: 1
 
-image: nginx
+image: bluebbb/godemo:rohan
 
 
 createNamespace: true

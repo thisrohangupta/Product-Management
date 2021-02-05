@@ -1,7 +1,7 @@
 name: rohan-nginx
 replicas: 1
 
-image: harness/todolist
+image: nginx
 
 
 createNamespace: true

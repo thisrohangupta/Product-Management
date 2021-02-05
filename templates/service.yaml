@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: {{.Values.name}}-svc
 spec:
-  type: {{.Values.serviceType}}
+  type: LoadBalancer
   loadBalancerIP: 130.211.229.35	 
   ports:
-  - port: {{.Values.servicePort}}
-    targetPort: {{.Values.serviceTargetPort}}
+  - port: 80
+    targetPort: todolist
     protocol: TCP
   selector:
     app: {{.Values.name}}

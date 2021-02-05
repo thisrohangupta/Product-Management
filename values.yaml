@@ -1,4 +1,4 @@
-name: rohan-nginx
+name: rohan-godemo
 replicas: 1
 
 image: bluebbb/godemo:rohan

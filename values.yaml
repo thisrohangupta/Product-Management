@@ -1,7 +1,7 @@
 name: rohan-godemo
 replicas: 1
 
-image: bluebbb/godemo:rohan
+image: bluebbb/godemo:<+pipeline.sequenceId>
 
 
 createNamespace: true

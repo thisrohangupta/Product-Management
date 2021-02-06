@@ -1,24 +1,11 @@
-{{- if .Values.env.config}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Values.name}}
+  name: {{.Values.name}}-config
 data:
-{{.Values.env.config | toYaml | indent 2}}
+  key: value
 ---
-{{- end}}
-
-{{- if .Values.env.secrets}}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.name}}
-stringData:
-{{.Values.env.secrets | toYaml | indent 2}}
----
-{{- end}}
-
-{{- if .Values.dockercfg}}
+{{- if .Values.createImagePullSecret}}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -28,9 +15,8 @@ metadata:
 data:
   .dockercfg: {{.Values.dockercfg}}
 type: kubernetes.io/dockercfg
----
 {{- end}}
-
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -45,21 +31,24 @@ spec:
       labels:
         app: {{.Values.name}}
     spec:
-      {{- if .Values.dockercfg}}
+      {{- if .Values.createImagePullSecret}}
       imagePullSecrets:
       - name: {{.Values.name}}-dockercfg
       {{- end}}
       containers:
       - name: {{.Values.name}}
         image: {{.Values.image}}
-        {{- if or .Values.env.config .Values.env.secrets}}
         envFrom:
-        {{- if .Values.env.config}}
         - configMapRef:
-            name: {{.Values.name}}
-        {{- end}}
-        {{- if .Values.env.secrets}}
-        - secretRef:
-            name: {{.Values.name}}
-        {{- end}}
-        {{- end}}
+            name: {{.Values.name}}-config
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 100m
+          requests:
+            memory: 512Mi
+            cpu: 100m
+        ports:
+        - name: todolist
+          containerPort: 8080
+          protocol: "TCP"

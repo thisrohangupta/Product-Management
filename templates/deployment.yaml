@@ -37,7 +37,7 @@ spec:
       {{- end}}
       containers:
       - name: {{.Values.name}}
-        image: {{.Values.image}}
+        image: us.gcr.io/playground-243019/todolist:2.1-branch
         envFrom:
         - configMapRef:
             name: {{.Values.name}}-config

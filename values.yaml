@@ -1,7 +1,5 @@
-name: todolist
-replicas: 1
-
-image: bluebbb/godemo:<+pipeline.sequenceId>
+name: rohan-cdng
+replicas: 2
 
 
 createNamespace: true

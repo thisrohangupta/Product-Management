@@ -9,13 +9,13 @@ namespace: <+infrastructure.namespace>
 # Possible values for ServiceType are:
 # ClusterIP | NodePort | LoadBalancer | ExternalName
 
-serviceType: LoadBalancer
+# serviceType: LoadBalancer
 
-# A Service can map an incoming port to any targetPort.
-# targetPort is where application is listening on inside the container.
+# # A Service can map an incoming port to any targetPort.
+# # targetPort is where application is listening on inside the container.
 
-servicePort: 80
-serviceTargetPort: todolist
+# servicePort: 80
+# serviceTargetPort: todolist
 
 # Specify all environment variables to be added to the container.
 # The following two maps, config and secrets, are put into a ConfigMap

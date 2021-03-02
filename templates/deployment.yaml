@@ -50,5 +50,5 @@ spec:
             cpu: 100m
         ports:
         - name: todolist
-          containerPort: 80
+          containerPort: 8080
           protocol: "TCP"

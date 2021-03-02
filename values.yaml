@@ -1,5 +1,5 @@
 name: rohan-cdng
-replicas: 1
+replicas: 2
 
 
 createNamespace: true

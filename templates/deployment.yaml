@@ -38,11 +38,11 @@ spec:
       containers:
       - name: {{.Values.name}}
         image: us.gcr.io/playground-243019/todolist:2.1-branch
-        readinessProbe:
-          httpGet:
-            scheme: HTTP
-            path: /
-            port: 8080
+#         readinessProbe:
+#           httpGet:
+#             scheme: HTTP
+#             path: /
+#             port: 8080
         envFrom:
         - configMapRef:
             name: {{.Values.name}}-config

@@ -37,7 +37,7 @@ spec:
       {{- end}}
       containers:
       - name: {{.Values.name}}
-        image: us.gcr.io/playground-243019/todolist:2.1-branch
+        image: {{.Values.image}}
 #         readinessProbe:
 #           httpGet:
 #             scheme: HTTP

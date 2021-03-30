@@ -48,10 +48,10 @@ spec:
             name: {{.Values.name}}-config
         resources:
           limits:
-            memory: 256Mi
+            memory: 512Mi
             cpu: 100m
           requests:
-            memory: 256Mi
+            memory: 512Mi
             cpu: 100m
         ports:
         - name: todolist

@@ -1,6 +1,6 @@
 name: rohan-cdng
 replicas: 1
-image: <+artifact.image>
+image: library/nginx
 
 
 createNamespace: true

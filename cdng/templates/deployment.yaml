@@ -38,11 +38,6 @@ spec:
       containers:
       - name: {{.Values.name}}
         image: {{.Values.image}}
-#         readinessProbe:
-#           httpGet:
-#             scheme: HTTP
-#             path: /
-#             port: 8080
         envFrom:
         - configMapRef:
             name: {{.Values.name}}-config
@@ -53,7 +48,3 @@ spec:
           requests:
             memory: 512Mi
             cpu: 100m
-        ports:
-        - name: todolist
-          containerPort: 8080
-          protocol: "TCP"

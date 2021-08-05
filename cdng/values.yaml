@@ -1,4 +1,4 @@
-name: <+env.name>-<+service.name>
+name: <+pipeline.stages.Deploy_Nginx.spec.serviceConfig.serviceRef>
 replicas: 1
 image: <+artifact.image>
 

@@ -20,4 +20,4 @@ env:
   config:
     key1: harnessDemo
   secrets:
-    key2: thisSecret
+    key2: sandbox

@@ -3,12 +3,10 @@ kind: Service
 metadata:
   name: {{.Values.name}}-svc
 spec:
-  type: LoadBalancer
-  loadBalancerSourceRanges: 
-  - 192.195.83.11/32 
+  type: {{.Values.serviceType}}
   ports:
-  - port: 80
-    targetPort: 8080
+  - port: {{.Values.servicePort}}
+    targetPort: {{.Values.serviceTargetPort}}
     protocol: TCP
   selector:
     app: {{.Values.name}}

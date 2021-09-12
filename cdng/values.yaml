@@ -1,4 +1,4 @@
-name: cdng
+name: pm-<+service.name>
 replicas: 1
 image: <+artifact.image>
 

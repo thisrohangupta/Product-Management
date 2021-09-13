@@ -1,0 +1,12 @@
+connector:
+  name: k8s cluster
+  identifier: k8s_cluster
+  description:
+  orgIdentifier: default
+  projectIdentifier: git_experience
+  type: K8sCluster
+  spec:
+    credential:
+      type: InheritFromDelegate
+    delegateSelectors:
+    - product-account

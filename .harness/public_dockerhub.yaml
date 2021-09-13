@@ -1,0 +1,12 @@
+connector:
+  name: public dockerhub
+  identifier: public_dockerhub
+  description:
+  orgIdentifier: default
+  projectIdentifier: git_experience
+  type: DockerRegistry
+  spec:
+    dockerRegistryUrl: https://registry.hub.docker.com/v2/
+    providerType: DockerHub
+    auth:
+      type: Anonymous

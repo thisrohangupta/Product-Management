@@ -1,0 +1,86 @@
+pipeline:
+    name: CI CD Pipeline
+    identifier: CI_CD_Pipeline
+    projectIdentifier: git_experience
+    orgIdentifier: default
+    tags: {}
+    stages:
+        - stage:
+              name: CD Stage
+              identifier: CD_Stage
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: nginx
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: nginx
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    repoName: Product-Management
+                                                    branch: main
+                                            skipResourceVersioning: false
+                                  - manifest:
+                                        identifier: dev_values
+                                        type: Values
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/values.yaml
+                                                    repoName: Product-Management
+                                                    branch: main
+                              artifacts:
+                                  primary:
+                                      type: DockerRegistry
+                                      spec:
+                                          connectorRef: public_dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                  infrastructure:
+                      environmentRef: dev
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: k8s_cluster
+                              namespace: product-management
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

@@ -70,6 +70,21 @@ pipeline:
                                 timeout: 10m
                                 spec:
                                     skipDryRun: false
+                          - step:
+                                type: ShellScript
+                                name: Hello
+                                identifier: Hello
+                                spec:
+                                    shell: Bash
+                                    onDelegate: true
+                                    source:
+                                        type: Inline
+                                        spec:
+                                            script: echo "Hello World"
+                                    environmentVariables: []
+                                    outputVariables: []
+                                    executionTarget: {}
+                                timeout: 10m
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

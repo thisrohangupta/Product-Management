@@ -1,4 +1,4 @@
-name: pm-<+service.name>
+name: pm
 replicas: 1
 image: <+artifact.image>
 

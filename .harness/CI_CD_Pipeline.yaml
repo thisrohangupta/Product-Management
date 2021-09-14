@@ -58,7 +58,7 @@ pipeline:
                           type: KubernetesDirect
                           spec:
                               connectorRef: k8s_cluster
-                              namespace: product-management
+                              namespace: canary
                               releaseName: release-<+INFRA_KEY>
                       allowSimultaneousDeployments: false
                   execution:

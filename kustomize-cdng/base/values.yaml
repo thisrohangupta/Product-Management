@@ -1,3 +1,0 @@
-image: <+artifact.image>
-
-namespace: kustomize-sandbox

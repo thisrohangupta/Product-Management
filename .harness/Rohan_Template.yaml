@@ -20,6 +20,8 @@ template:
                         echo "Hello World"
 
                         echo "This is Harness to Git"
+                        
+                        echo "This is Git to Harness, Hi Archit!"
             environmentVariables: []
             outputVariables: []
             executionTarget: {}

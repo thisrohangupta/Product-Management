@@ -1,0 +1,29 @@
+template:
+    name: Rohan Template
+    identifier: Rohan_Template
+    versionLabel: Version2.0
+    type: Step
+    projectIdentifier: CD_Product_Team
+    orgIdentifier: default
+    description: null
+    tags: {}
+    spec:
+        type: ShellScript
+        timeout: 10m
+        spec:
+            shell: Bash
+            onDelegate: true
+            source:
+                type: Inline
+                spec:
+                    script: |
+                        echo "Hello World"
+
+                        echo "This is Harness to Git"
+
+                        echo "This is Git to Harness, Hi Archit!"
+
+                        echo <+pipeline.name>
+            environmentVariables: []
+            outputVariables: []
+            executionTarget: {}

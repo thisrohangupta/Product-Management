@@ -130,12 +130,13 @@ pipeline:
     notificationRules:
         - name: Sample Teams
           pipelineEvents:
-              - type: AllEvents
+              - type: PipelineStart
           notificationMethod:
               value:
                   type: Email
                   spec:
-                      userGroups: []
+                      userGroups:
+                          - account.ProductManagement
                       recipients:
                           - rohan.gupta@harness.io
           enabled: true

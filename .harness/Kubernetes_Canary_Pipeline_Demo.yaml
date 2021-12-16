@@ -1,5 +1,5 @@
 pipeline:
-    name: Kubernetes Canary Pipeline Demo
+    name: Kubernetes Pipeline Demo
     identifier: Kubernetes_Canary_Pipeline_Demo
     projectIdentifier: Continuous_Deployment_Product_Team
     orgIdentifier: Product_Management_Design

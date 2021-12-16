@@ -1,0 +1,17 @@
+connector:
+  name: ThisRohanGupta Repo
+  identifier: ThisRohanGupta_Repo
+  description:
+  orgIdentifier: Product_Management_Design
+  projectIdentifier: Continuous_Deployment_Product_Team
+  type: Github
+  spec:
+    url: https://github.com/ThisRohanGupta/Product-Management.git
+    authentication:
+      type: Http
+      spec:
+        type: UsernameToken
+        spec:
+          username: ThisRohanGupta
+          tokenRef: account.ThisRohanGupta_PAT
+    type: Repo

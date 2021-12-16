@@ -93,13 +93,24 @@ pipeline:
                                 name: Primary Deployment
                                 identifier: primaryDepoyment
                                 steps:
-                                    - step:
-                                          name: Rolling Deployment
-                                          identifier: rollingDeployment
-                                          type: K8sRollingDeploy
-                                          timeout: 10m
-                                          spec:
-                                              skipDryRun: false
+                                    - parallel:
+                                          - step:
+                                                name: Rolling Deployment
+                                                identifier: rollingDeployment
+                                                type: K8sRollingDeploy
+                                                timeout: 10m
+                                                spec:
+                                                    skipDryRun: false
+                                          - step:
+                                                type: Http
+                                                name: Check Health
+                                                identifier: Check_Health
+                                                spec:
+                                                    url: https://www.google.com
+                                                    method: GET
+                                                    headers: []
+                                                    outputVariables: []
+                                                timeout: 10s
                                 rollbackSteps:
                                     - step:
                                           name: Rolling Rollback
@@ -108,6 +119,7 @@ pipeline:
                                           timeout: 10m
                                           spec: {}
                       rollbackSteps: []
+                  serviceDependencies: []
               tags: {}
               failureStrategies:
                   - onFailure:
@@ -115,3 +127,15 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+    notificationRules:
+        - name: Sample Teams
+          pipelineEvents:
+              - type: AllEvents
+          notificationMethod:
+              value:
+                  type: Email
+                  spec:
+                      userGroups: []
+                      recipients:
+                          - rohan.gupta@harness.io
+          enabled: true

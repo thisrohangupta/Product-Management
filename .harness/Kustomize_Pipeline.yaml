@@ -127,16 +127,4 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
-    notificationRules:
-        - name: Sample Teams
-          pipelineEvents:
-              - type: PipelineStart
-          notificationMethod:
-              value:
-                  type: Email
-                  spec:
-                      userGroups:
-                          - account.ProductManagement
-                      recipients:
-                          - rohan.gupta@harness.io
-          enabled: true
+    notificationRules: []

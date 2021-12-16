@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rohan-helloworld
-  namespace: rohan-dev
+  namespace: sandbox
   labels:
     app: rohan-helloworld
   annotations:

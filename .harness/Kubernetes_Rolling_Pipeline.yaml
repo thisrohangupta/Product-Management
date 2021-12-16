@@ -58,6 +58,12 @@ pipeline:
                                 spec:
                                     skipDryRun: false
                           - step:
+                                type: K8sRollingDeploy
+                                name: rollingDemo
+                                identifier: rolling1
+                                spec:
+                                    skipDryRun: false
+                          - step:
                                 type: ShellScript
                                 name: Variable Print Out
                                 identifier: Variable_Print_Out

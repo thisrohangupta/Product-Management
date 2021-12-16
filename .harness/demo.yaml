@@ -1,0 +1,33 @@
+inputSet:
+  identifier: "demo"
+  pipeline:
+    identifier: "Kubernetes_Canary_Pipeline_Demo"
+    stages:
+    - stage:
+        identifier: "Deploy_to_Dev"
+        type: "Deployment"
+        spec:
+          serviceConfig:
+            serviceDefinition:
+              type: "Kubernetes"
+              spec:
+                manifests:
+                - manifest:
+                    identifier: "dev_manifest"
+                    type: "K8sManifest"
+                    spec:
+                      store:
+                        type: "Github"
+                        spec:
+                          branch: "main"
+                artifacts:
+                  primary:
+                    type: "DockerRegistry"
+                    spec:
+                      tag: "stable-perl"
+  name: "demo"
+  tags:
+    status: "active"
+    owner: "rohan"
+  orgIdentifier: "Product_Management_Design"
+  projectIdentifier: "Continuous_Deployment_Product_Team"

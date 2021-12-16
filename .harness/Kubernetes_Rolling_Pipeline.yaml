@@ -57,23 +57,6 @@ pipeline:
                                 timeout: 10m
                                 spec:
                                     skipDryRun: false
-                          - step:
-                                type: ShellScript
-                                name: Variable Print Out
-                                identifier: Variable_Print_Out
-                                spec:
-                                    shell: Bash
-                                    onDelegate: true
-                                    source:
-                                        type: Inline
-                                        spec:
-                                            script: |+
-                                                echo "Pipeline Name: " <+pipeline.name>
-
-                                    environmentVariables: []
-                                    outputVariables: []
-                                    executionTarget: {}
-                                timeout: 10m
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

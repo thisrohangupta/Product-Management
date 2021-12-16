@@ -56,7 +56,7 @@ pipeline:
                           type: KubernetesDirect
                           spec:
                               connectorRef: account.k8s_staging
-                              namespace: rohan-kustomize
+                              namespace: sandbox
                               releaseName: release-<+INFRA_KEY>
                       allowSimultaneousDeployments: false
                   execution:

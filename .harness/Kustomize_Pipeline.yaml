@@ -45,7 +45,7 @@ pipeline:
                                             store:
                                                 type: Github
                                                 spec:
-                                                    connectorRef: ThisRohanGupta
+                                                    connectorRef: ThisRohanGupta_Repo
                                                     gitFetchType: Branch
                                                     paths:
                                                         - kustomize-cdng/patch.yaml

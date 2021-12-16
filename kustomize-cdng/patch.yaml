@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: example-deploy
- namespace: default
+ name: rohan-helloworld
+ namespace: sandbox
 spec:
  template :
    spec:
      containers:
-       - name: example-app
+       - name: rohan-helloworld
          image: <+serviceConfig.serviceDefinition.spec.variables.image>
  
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: example-deploy
- namespace: default
+ name: rohan-helloworld
+ namespace: sandbox
 spec:
  replicas: <+serviceConfig.serviceDefinition.spec.variables.replica>

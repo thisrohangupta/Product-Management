@@ -28,7 +28,7 @@ pipeline:
                                                     connectorRef: ThisRohanGupta
                                                     gitFetchType: Branch
                                                     paths:
-                                                        - cdng/
+                                                        - k8s/microservice-demo.yaml
                                                     repoName: Product-Management
                                                     branch: main
                                             skipResourceVersioning: false

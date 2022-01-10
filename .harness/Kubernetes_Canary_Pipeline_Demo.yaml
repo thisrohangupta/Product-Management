@@ -6,7 +6,7 @@ pipeline:
     tags: {}
     stages:
         - stage:
-              name: Deploy to Dev
+              name: Deploy
               identifier: Deploy_to_Dev
               description: ""
               type: Deployment

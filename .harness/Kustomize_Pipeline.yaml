@@ -127,4 +127,70 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - stage:
+              name: Approval Production
+              identifier: Approval_Production
+              description: ""
+              type: Approval
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                name: Approval
+                                identifier: approval
+                                type: HarnessApproval
+                                timeout: 1d
+                                spec:
+                                    approvalMessage: |-
+                                        Please review the following information
+                                        and approve the pipeline progression
+                                    includePipelineExecutionHistory: true
+                                    approvers:
+                                        minimumCount: 1
+                                        disallowPipelineExecutor: false
+                                        userGroups:
+                                            - account.ProductManagement
+                                    approverInputs: []
+              tags: {}
+        - stage:
+              name: Deploy to Prod
+              identifier: Deploy_to_Prod
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      useFromStage:
+                          stage: Deploy_to_Dev
+                  infrastructure:
+                      environmentRef: production
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: account.k8s_staging
+                              namespace: rohan-prod
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback
     notificationRules: []

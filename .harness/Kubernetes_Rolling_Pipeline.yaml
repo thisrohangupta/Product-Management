@@ -154,7 +154,7 @@ pipeline:
                         errors:
                             - AllErrors
                         action:
-                            type: StageRollback
+                            type: Ignore
         - stage:
               name: Deploy to DR
               identifier: Deploy_to_DR
@@ -196,3 +196,5 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+              when:
+                  pipelineStatus: Failure

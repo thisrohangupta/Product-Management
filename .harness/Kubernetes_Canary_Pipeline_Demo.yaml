@@ -129,7 +129,7 @@ pipeline:
                         errors:
                             - AllErrors
                         action:
-                            type: StageRollback
+                            type: Ignore
         - stage:
               name: Deploy to Prod
               identifier: Deploy_to_Prod

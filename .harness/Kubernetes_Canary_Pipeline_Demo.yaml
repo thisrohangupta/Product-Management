@@ -50,6 +50,21 @@ pipeline:
                       allowSimultaneousDeployments: false
                   execution:
                       steps:
+                          - step:
+                                type: ShellScript
+                                name: failure
+                                identifier: failure
+                                spec:
+                                    shell: Bash
+                                    onDelegate: true
+                                    source:
+                                        type: Inline
+                                        spec:
+                                            script: exit 1
+                                    environmentVariables: []
+                                    outputVariables: []
+                                    executionTarget: {}
+                                timeout: 10m
                           - stepGroup:
                                 name: Canary Deployment
                                 identifier: canaryDepoyment
@@ -107,6 +122,7 @@ pipeline:
                                     outputVariables: []
                                 timeout: 10s
                       rollbackSteps: []
+                  serviceDependencies: []
               tags: {}
               failureStrategies:
                   - onFailure:
@@ -114,31 +130,6 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
-        - stage:
-              name: Approval to Production
-              identifier: Approval_to_Production
-              description: ""
-              type: Approval
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                name: Approval
-                                identifier: approval
-                                type: HarnessApproval
-                                timeout: 1d
-                                spec:
-                                    approvalMessage: |-
-                                        Please review the following information
-                                        and approve the pipeline progression
-                                    includePipelineExecutionHistory: true
-                                    approvers:
-                                        minimumCount: 1
-                                        disallowPipelineExecutor: false
-                                        userGroups:
-                                            - account.ProductManagement
-                                    approverInputs: []
-              tags: {}
         - stage:
               name: Deploy to Prod
               identifier: Deploy_to_Prod
@@ -180,3 +171,5 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+              when:
+                  pipelineStatus: Failure

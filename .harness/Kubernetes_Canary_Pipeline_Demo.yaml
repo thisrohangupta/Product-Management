@@ -121,7 +121,22 @@ pipeline:
                                     headers: []
                                     outputVariables: []
                                 timeout: 10s
-                      rollbackSteps: []
+                      rollbackSteps:
+                          - step:
+                                type: ShellScript
+                                name: failure rollback
+                                identifier: failure_rollback
+                                spec:
+                                    shell: Bash
+                                    onDelegate: true
+                                    source:
+                                        type: Inline
+                                        spec:
+                                            script: exit 1
+                                    environmentVariables: []
+                                    outputVariables: []
+                                    executionTarget: {}
+                                timeout: 10m
                   serviceDependencies: []
               tags: {}
               failureStrategies:
@@ -129,7 +144,7 @@ pipeline:
                         errors:
                             - AllErrors
                         action:
-                            type: Ignore
+                            type: StageRollback
         - stage:
               name: Deploy to Prod
               identifier: Deploy_to_Prod

@@ -1,0 +1,12 @@
+connector:
+  name: gke-autopilot
+  identifier: gkeautopilot
+  description:
+  orgIdentifier: Product_Management_Design
+  projectIdentifier: Continuous_Deployment_Product_Team
+  type: K8sCluster
+  spec:
+    credential:
+      type: InheritFromDelegate
+    delegateSelectors:
+    - rohan-cd-product

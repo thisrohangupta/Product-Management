@@ -9,98 +9,29 @@ pipeline:
         - stage:
               name: Deploy
               identifier: Deploy
-              description: ""
-              type: Deployment
-              spec:
-                  serviceConfig:
-                      serviceRef: nginx
-                      serviceDefinition:
-                          type: Kubernetes
-                          spec:
-                              variables: []
-                              manifests:
-                                  - manifest:
-                                        identifier: dev
-                                        type: K8sManifest
-                                        spec:
-                                            store:
-                                                type: Github
+              template:
+                  templateRef: Demo_Stage
+                  versionLabel: v1
+                  templateInputs:
+                      type: Deployment
+                      spec:
+                          serviceConfig:
+                              serviceDefinition:
+                                  type: Kubernetes
+                                  spec:
+                                      manifests:
+                                          - manifest:
+                                                identifier: dev
+                                                type: K8sManifest
                                                 spec:
-                                                    connectorRef: ThisRohanGupta_Repo
-                                                    gitFetchType: Branch
-                                                    paths:
-                                                        - cdng/
-                                                    branch: <+input>
-                                            skipResourceVersioning: false
-                              artifacts:
-                                  primary:
-                                      spec:
-                                          connectorRef: account.Rohan_Dockerhub
-                                          imagePath: library/nginx
-                                          tag: <+input>
-                                      type: DockerRegistry
-                  infrastructure:
-                      environmentRef: <+input>
-                      infrastructureDefinition:
-                          type: KubernetesDirect
-                          spec:
-                              connectorRef: gkeautopilot
-                              namespace: <+service.name>-<+env.name>
-                              releaseName: release-<+INFRA_KEY>
-                      allowSimultaneousDeployments: false
-                  execution:
-                      steps:
-                          - step:
-                                type: ShellScript
-                                name: Print Variables
-                                identifier: Print_Variables
-                                spec:
-                                    shell: Bash
-                                    onDelegate: true
-                                    source:
-                                        type: Inline
-                                        spec:
-                                            script: |+
-                                                echo <+pipeline.name>
-
-                                                echo <+stage.name>
-
-                                                echo <+serviceConfig.serviceRef>
-
-
-                                    environmentVariables: []
-                                    outputVariables: []
-                                    executionTarget: {}
-                                timeout: 10m
-                          - step:
-                                name: Rollout Deployment
-                                identifier: rolloutDeployment
-                                type: K8sRollingDeploy
-                                timeout: 10m
-                                spec:
-                                    skipDryRun: false
-                          - step:
-                                type: Http
-                                name: Health Check
-                                identifier: Health_Check
-                                spec:
-                                    url: https://google.com
-                                    method: GET
-                                    headers: []
-                                    outputVariables: []
-                                timeout: 10s
-                      rollbackSteps:
-                          - step:
-                                name: Rollback Rollout Deployment
-                                identifier: rollbackRolloutDeployment
-                                type: K8sRollingRollback
-                                timeout: 10m
-                                spec: {}
-                  serviceDependencies: []
-              tags: {}
-              failureStrategies:
-                  - onFailure:
-                        errors:
-                            - AllErrors
-                        action:
-                            type: StageRollback
+                                                    store:
+                                                        type: Github
+                                                        spec:
+                                                            branch: <+input>
+                                      artifacts:
+                                          primary:
+                                              type: DockerRegistry
+                                              spec:
+                                                  tag: <+input>
+                          infrastructure:
+                              environmentRef: <+input>

@@ -1,0 +1,73 @@
+pipeline:
+    name: cd-deployment
+    identifier: cddeployment
+    allowStageExecutions: false
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    tags: {}
+    stages:
+        - stage:
+              name: Deploy
+              identifier: Deploy
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: nginx
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: dev
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta_Repo
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    branch: <+input>
+                                            skipResourceVersioning: false
+                              artifacts:
+                                  primary:
+                                      spec:
+                                          connectorRef: account.Rohan_Dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                                      type: DockerRegistry
+                  infrastructure:
+                      environmentRef: development
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: gkeautopilot
+                              namespace: rohan-dev
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

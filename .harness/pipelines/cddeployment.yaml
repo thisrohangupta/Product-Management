@@ -40,12 +40,12 @@ pipeline:
                                           tag: <+input>
                                       type: DockerRegistry
                   infrastructure:
-                      environmentRef: development
+                      environmentRef: <+input>
                       infrastructureDefinition:
                           type: KubernetesDirect
                           spec:
                               connectorRef: gkeautopilot
-                              namespace: rohan-dev
+                              namespace: <+service.name>-<+env.name>
                               releaseName: release-<+INFRA_KEY>
                       allowSimultaneousDeployments: false
                   execution:

@@ -1,0 +1,64 @@
+template:
+    name: CD Demo
+    identifier: CD_Demo
+    versionLabel: 3.0.1
+    type: Stage
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    spec:
+        description: ""
+        type: Deployment
+        spec:
+            serviceConfig:
+                serviceRef: helloworld
+                serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                        variables: []
+                        manifests:
+                            - manifest:
+                                  identifier: dev
+                                  type: K8sManifest
+                                  spec:
+                                      store:
+                                          type: Github
+                                          spec:
+                                              connectorRef: ThisRohanGupta_Repo
+                                              gitFetchType: Branch
+                                              paths:
+                                                  - cdng/
+                                              branch: main
+                                      skipResourceVersioning: false
+                        artifacts:
+                            primary:
+                                spec:
+                                    connectorRef: account.Rohan_Dockerhub
+                                    imagePath: library/nginx
+                                    tag: <+input>
+                                type: DockerRegistry
+            infrastructure:
+                environmentRef: development
+                infrastructureDefinition:
+                    type: KubernetesDirect
+                    spec:
+                        connectorRef: gkeautopilot
+                        namespace: rohan-dev
+                        releaseName: release-<+INFRA_KEY>
+                allowSimultaneousDeployments: false
+            execution:
+                steps:
+                    - step:
+                          type: K8sRollingDeploy
+                          name: Rolling Deployment
+                          identifier: Rolling_Deployment
+                          spec:
+                              skipDryRun: false
+                          timeout: 10m
+                rollbackSteps: []
+        tags: {}
+        failureStrategies:
+            - onFailure:
+                  errors:
+                      - AllErrors
+                  action:
+                      type: StageRollback

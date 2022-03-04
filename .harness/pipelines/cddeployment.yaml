@@ -11,7 +11,6 @@ pipeline:
               identifier: CD_Demo
               template:
                   templateRef: CD_Demo
-                  versionLabel: 3.0.1
                   templateInputs:
                       type: Deployment
                       spec:

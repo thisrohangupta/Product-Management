@@ -23,3 +23,20 @@ pipeline:
                                               type: DockerRegistry
                                               spec:
                                                   tag: <+input>
+        - stage:
+              name: CD Demo
+              identifier: CD_Demo_1
+              template:
+                  templateRef: CD_Demo
+                  templateInputs:
+                      type: Deployment
+                      spec:
+                          serviceConfig:
+                              serviceDefinition:
+                                  type: Kubernetes
+                                  spec:
+                                      artifacts:
+                                          primary:
+                                              type: DockerRegistry
+                                              spec:
+                                                  tag: <+input>

@@ -1,0 +1,49 @@
+template:
+    name: Script Stage
+    identifier: Script_Stage
+    versionLabel: 0.0.1
+    type: Stage
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    spec:
+        type: Deployment
+        spec:
+            serviceConfig:
+                serviceRef: helloworld
+                serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                        variables: []
+            infrastructure:
+                environmentRef: development
+                infrastructureDefinition:
+                    type: KubernetesDirect
+                    spec:
+                        connectorRef: gkeautopilot
+                        namespace: dev
+                        releaseName: release-<+INFRA_KEY>
+                allowSimultaneousDeployments: false
+            execution:
+                steps:
+                    - step:
+                          type: ShellScript
+                          name: Sehll Job
+                          identifier: Sehll_Job
+                          spec:
+                              shell: Bash
+                              onDelegate: true
+                              source:
+                                  type: Inline
+                                  spec:
+                                      script: echo "Shell"
+                              environmentVariables: []
+                              outputVariables: []
+                              executionTarget: {}
+                          timeout: 10m
+                rollbackSteps: []
+        failureStrategies:
+            - onFailure:
+                  errors:
+                      - AllErrors
+                  action:
+                      type: StageRollback

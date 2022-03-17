@@ -1,0 +1,28 @@
+template:
+    name: shell stage
+    identifier: shell_stage
+    versionLabel: 0.0.1
+    type: Stage
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    spec:
+        type: Approval
+        spec:
+            execution:
+                steps:
+                    - step:
+                          type: ShellScript
+                          name: Echo Shell
+                          identifier: Echo_Shell
+                          spec:
+                              shell: Bash
+                              onDelegate: true
+                              source:
+                                  type: Inline
+                                  spec:
+                                      script: echo "Shell Script"
+                              environmentVariables: []
+                              outputVariables: []
+                              executionTarget: {}
+                          timeout: 10m
+            serviceDependencies: []

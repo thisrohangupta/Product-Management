@@ -120,3 +120,9 @@ pipeline:
               template:
                   templateRef: Script_Stage
                   versionLabel: 0.0.1
+        - stage:
+              name: Shell script
+              identifier: Shell_script
+              template:
+                  templateRef: shell_stage
+                  versionLabel: 0.0.1

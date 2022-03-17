@@ -7,36 +7,67 @@ pipeline:
     tags: {}
     stages:
         - stage:
-              name: CD Demo
-              identifier: CD_Demo
-              template:
-                  templateRef: CD_Demo
-                  templateInputs:
-                      type: Deployment
-                      spec:
-                          serviceConfig:
-                              serviceDefinition:
-                                  type: Kubernetes
-                                  spec:
-                                      artifacts:
-                                          primary:
-                                              type: DockerRegistry
-                                              spec:
-                                                  tag: <+input>
-        - stage:
-              name: CD Demo
-              identifier: CD_Demo_1
-              template:
-                  templateRef: CD_Demo
-                  templateInputs:
-                      type: Deployment
-                      spec:
-                          serviceConfig:
-                              serviceDefinition:
-                                  type: Kubernetes
-                                  spec:
-                                      artifacts:
-                                          primary:
-                                              type: DockerRegistry
-                                              spec:
-                                                  tag: <+input>
+              name: CD Deploy
+              identifier: CD_Deploy
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: helloworld
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: dev_manifest
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta_Repo
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    branch: main
+                                            skipResourceVersioning: false
+                              artifacts:
+                                  primary:
+                                      spec:
+                                          connectorRef: account.Rohan_Dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                                      type: DockerRegistry
+                  infrastructure:
+                      environmentRef: development
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: gkeautopilot
+                              namespace: dev
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

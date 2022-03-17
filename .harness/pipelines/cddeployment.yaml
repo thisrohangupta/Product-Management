@@ -114,3 +114,9 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - stage:
+              name: Shelll stage
+              identifier: Shelll_stage
+              template:
+                  templateRef: Script_Stage
+                  versionLabel: 0.0.1

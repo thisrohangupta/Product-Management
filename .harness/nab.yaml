@@ -1,0 +1,25 @@
+inputSet:
+  identifier: "nab"
+  pipeline:
+    identifier: "cddeployment"
+    stages:
+    - stage:
+        identifier: "CD_Deploy"
+        type: "Deployment"
+        spec:
+          serviceConfig:
+            serviceDefinition:
+              type: "Kubernetes"
+              spec:
+                variables:
+                - name: "nab_variable"
+                  type: "Number"
+                  value: 3
+                artifacts:
+                  primary:
+                    type: "DockerRegistry"
+                    spec:
+                      tag: "stable-perl"
+  name: "nab"
+  orgIdentifier: "Product_Management_Design"
+  projectIdentifier: "Continuous_Deployment_Product_Team"

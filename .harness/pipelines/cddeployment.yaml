@@ -83,3 +83,8 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+    variables:
+        - name: rohan
+          type: String
+          default: product
+          value: <+input>.allowedValues(engineer,document-writer,qa,ceo,product)

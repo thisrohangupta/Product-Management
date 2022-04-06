@@ -17,7 +17,10 @@ pipeline:
                       serviceDefinition:
                           type: Kubernetes
                           spec:
-                              variables: []
+                              variables:
+                                  - name: nab_variable
+                                    type: Number
+                                    value: <+input>
                               manifests:
                                   - manifest:
                                         identifier: dev_manifest
@@ -51,47 +54,6 @@ pipeline:
                   execution:
                       steps:
                           - step:
-                                name: Rollout Deployment
-                                identifier: rolloutDeployment
-                                type: K8sRollingDeploy
-                                timeout: 10m
-                                spec:
-                                    skipDryRun: false
-                      rollbackSteps:
-                          - step:
-                                name: Rollback Rollout Deployment
-                                identifier: rollbackRolloutDeployment
-                                type: K8sRollingRollback
-                                timeout: 10m
-                                spec: {}
-              tags: {}
-              failureStrategies:
-                  - onFailure:
-                        errors:
-                            - AllErrors
-                        action:
-                            type: StageRollback
-        - stage:
-              name: Post Deploy Config
-              identifier: Post_Deploy_Config
-              description: ""
-              type: Deployment
-              spec:
-                  serviceConfig:
-                      useFromStage:
-                          stage: CD_Deploy
-                  infrastructure:
-                      environmentRef: <+pipeline.stages.CD_Deploy.spec.infrastructure.environmentRef>
-                      infrastructureDefinition:
-                          type: KubernetesDirect
-                          spec:
-                              connectorRef: gkeautopilot
-                              namespace: dev
-                              releaseName: release-<+INFRA_KEY>
-                      allowSimultaneousDeployments: false
-                  execution:
-                      steps:
-                          - step:
                                 type: ShellScript
                                 name: test
                                 identifier: test
@@ -101,12 +63,19 @@ pipeline:
                                     source:
                                         type: Inline
                                         spec:
-                                            script: echo "Post Process"
+                                            script: echo <+serviceConfig.serviceDefinition.spec.variables.nab_variable>
                                     environmentVariables: []
                                     outputVariables: []
                                     executionTarget: {}
                                 timeout: 10m
-                      rollbackSteps: []
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+                  serviceDependencies: []
               tags: {}
               failureStrategies:
                   - onFailure:
@@ -114,15 +83,3 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
-        - stage:
-              name: Shelll stage
-              identifier: Shelll_stage
-              template:
-                  templateRef: Script_Stage
-                  versionLabel: 0.0.1
-        - stage:
-              name: Shell script
-              identifier: Shell_script
-              template:
-                  templateRef: shell_stage
-                  versionLabel: 0.0.1

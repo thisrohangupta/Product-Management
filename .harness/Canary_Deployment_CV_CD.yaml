@@ -1,0 +1,106 @@
+pipeline:
+    name: Canary Deployment CV CD
+    identifier: Canary_Deployment_CV_CD
+    allowStageExecutions: false
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    tags:
+        canary-deployment: ""
+        continuous-verification: ""
+    stages:
+        - stage:
+              name: Deploy to Prod
+              identifier: Deploy_to_Prod
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: todolist
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: prod
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta_Repo
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    branch: main
+                                            skipResourceVersioning: false
+                              artifacts:
+                                  primary:
+                                      spec:
+                                          connectorRef: account.Rohan_Dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                                      type: DockerRegistry
+                  infrastructure:
+                      environmentRef: production
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: account.k8s_staging
+                              namespace: rohan-canary
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - stepGroup:
+                                name: Canary Deployment
+                                identifier: canaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Canary Deployment
+                                          identifier: canaryDeployment
+                                          type: K8sCanaryDeploy
+                                          timeout: 10m
+                                          spec:
+                                              instanceSelection:
+                                                  type: Count
+                                                  spec:
+                                                      count: 1
+                                              skipDryRun: false
+                                    - step:
+                                          name: Canary Delete
+                                          identifier: canaryDelete
+                                          type: K8sCanaryDelete
+                                          timeout: 10m
+                                          spec: {}
+                          - stepGroup:
+                                name: Primary Deployment
+                                identifier: primaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Rolling Deployment
+                                          identifier: rollingDeployment
+                                          type: K8sRollingDeploy
+                                          timeout: 10m
+                                          spec:
+                                              skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Canary Delete
+                                identifier: rollbackCanaryDelete
+                                type: K8sCanaryDelete
+                                timeout: 10m
+                                spec: {}
+                          - step:
+                                name: Rolling Rollback
+                                identifier: rollingRollback
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

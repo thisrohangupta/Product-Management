@@ -4,7 +4,9 @@ pipeline:
     allowStageExecutions: false
     projectIdentifier: Continuous_Deployment_Product_Team
     orgIdentifier: Product_Management_Design
-    tags: {}
+    tags:
+        rolling deployment: ""
+        change-intel: ""
     stages:
         - stage:
               name: Deploy to Dev

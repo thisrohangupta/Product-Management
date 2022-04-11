@@ -1,0 +1,73 @@
+pipeline:
+    name: CD CV Demo
+    identifier: CD_CV_Demo
+    allowStageExecutions: false
+    projectIdentifier: Continuous_Deployment_Product_Team
+    orgIdentifier: Product_Management_Design
+    tags: {}
+    stages:
+        - stage:
+              name: Deploy to Dev
+              identifier: Deploy_to_Dev
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: todolist
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: dev
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ThisRohanGupta_Repo
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    branch: main
+                                            skipResourceVersioning: false
+                              artifacts:
+                                  primary:
+                                      spec:
+                                          connectorRef: account.Rohan_Dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                                      type: DockerRegistry
+                  infrastructure:
+                      environmentRef: development
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: account.k8s_staging
+                              namespace: dev
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

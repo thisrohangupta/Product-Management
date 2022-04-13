@@ -81,14 +81,14 @@ pipeline:
                                             type: DockerRegistry
                                       - sidecar:
                                             spec:
-                                                connectorRef: dockerhub
+                                                connectorRef: public_dockerhub
                                                 imagePath: library/nginx
                                                 tag: <+input>
                                             identifier: dev
                                             type: DockerRegistry
                                       - sidecar:
                                             spec:
-                                                connectorRef: dockerhub
+                                                connectorRef: public_dockerhub
                                                 imagePath: library/nginx
                                                 tag: <+input>
                                             identifier: qa

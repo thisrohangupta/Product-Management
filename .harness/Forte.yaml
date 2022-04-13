@@ -1,0 +1,159 @@
+pipeline:
+    name: Forte
+    identifier: Forte
+    allowStageExecutions: false
+    projectIdentifier: CD_Product_Team
+    orgIdentifier: default
+    tags: {}
+    properties:
+        ci:
+            codebase:
+                connectorRef: ProductManagementRepo
+                build: <+input>
+    stages:
+        - stage:
+              name: Build Service API
+              identifier: Build_Service_API
+              type: CI
+              spec:
+                  cloneCodebase: true
+                  infrastructure:
+                      type: KubernetesDirect
+                      spec:
+                          connectorRef: rohan_product_cluster
+                          namespace: dev
+                          automountServiceAccountToken: true
+                  execution:
+                      steps:
+                          - step:
+                                type: Run
+                                name: print build image
+                                identifier: print_build_image
+                                spec:
+                                    connectorRef: public_dockerhub
+                                    image: maven
+                                    shell: Sh
+                                    command: echo <+pipeline.stages.Build_Service_API.variables.api_image>
+              variables:
+                  - name: api_image
+                    type: String
+                    value: api_image
+        - stage:
+              name: Deploy Service API
+              identifier: Deploy_Service_API
+              description: ""
+              type: Deployment
+              spec:
+                  serviceConfig:
+                      serviceRef: KIGHTWING_SERVICE
+                      serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                              variables: []
+                              manifests:
+                                  - manifest:
+                                        identifier: dev
+                                        type: K8sManifest
+                                        spec:
+                                            store:
+                                                type: Github
+                                                spec:
+                                                    connectorRef: ProductManagementRepo
+                                                    gitFetchType: Branch
+                                                    paths:
+                                                        - cdng/
+                                                    branch: dev
+                                            skipResourceVersioning: false
+                              artifacts:
+                                  primary:
+                                      spec:
+                                          connectorRef: public_dockerhub
+                                          imagePath: library/nginx
+                                          tag: <+input>
+                                      type: DockerRegistry
+                                  sidecars:
+                                      - sidecar:
+                                            spec:
+                                                connectorRef: public_dockerhub
+                                                imagePath: library/nginx
+                                                tag: <+input>
+                                            identifier: proxy
+                                            type: DockerRegistry
+                                      - sidecar:
+                                            spec:
+                                                connectorRef: dockerhub
+                                                imagePath: library/nginx
+                                                tag: <+input>
+                                            identifier: dev
+                                            type: DockerRegistry
+                                      - sidecar:
+                                            spec:
+                                                connectorRef: dockerhub
+                                                imagePath: library/nginx
+                                                tag: <+input>
+                                            identifier: qa
+                                            type: DockerRegistry
+                  infrastructure:
+                      environmentRef: rohandev
+                      infrastructureDefinition:
+                          type: KubernetesDirect
+                          spec:
+                              connectorRef: rohan_product_cluster
+                              namespace: rohan-dev
+                              releaseName: release-<+INFRA_KEY>
+                      allowSimultaneousDeployments: false
+                  execution:
+                      steps:
+                          - step:
+                                type: ShellScript
+                                name: Printing Images
+                                identifier: Printing_Images
+                                spec:
+                                    shell: Bash
+                                    onDelegate: true
+                                    source:
+                                        type: Inline
+                                        spec:
+                                            script: |-
+                                                echo "Print From CI"
+                                                echo <+pipeline.stages.Build_Service_API.variables.api_image>
+
+                                                echo "print from CD Artifact section"
+                                                echo "****Primary****"
+                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.imagePath>
+
+                                                echo "****Image 2****"
+                                                echo  <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.proxy.spec.imagePath>
+
+
+                                                echo "****Image 3****"
+                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.dev.spec.imagePath>
+
+                                                echo "****Image 4***"
+                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.qa.spec.imagePath>
+                                    environmentVariables: []
+                                    outputVariables: []
+                                    executionTarget: {}
+                                timeout: 10m
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+                  serviceDependencies: []
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

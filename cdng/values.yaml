@@ -1,6 +1,6 @@
 name: pm
 replicas: 1
-image: <+artifact.image>
+image: <+pipeline.stages.Build_Service_API.variables.api_image>
 
 
 createNamespace: true

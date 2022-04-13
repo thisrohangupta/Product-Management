@@ -1,6 +1,9 @@
-name: pm
+name: rohan-demo
 replicas: 1
 image: <+pipeline.stages.Build_Service_API.variables.api_image>
+sidecar1: <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.dev.spec.imagePath>
+sidecar2: <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.proxy.spec.imagePath>
+sidecar3: <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.imagePath>
 
 
 createNamespace: true

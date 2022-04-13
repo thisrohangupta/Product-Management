@@ -67,28 +67,28 @@ pipeline:
                               artifacts:
                                   primary:
                                       spec:
-                                          connectorRef: public_dockerhub
+                                          connectorRef: account.Rohan_Dockerhub
                                           imagePath: library/nginx
                                           tag: <+input>
                                       type: DockerRegistry
                                   sidecars:
                                       - sidecar:
                                             spec:
-                                                connectorRef: public_dockerhub
+                                                connectorRef: account.Rohan_Dockerhub
                                                 imagePath: library/nginx
                                                 tag: <+input>
                                             identifier: proxy
                                             type: DockerRegistry
                                       - sidecar:
                                             spec:
-                                                connectorRef: public_dockerhub
+                                                connectorRef: account.Rohan_Dockerhub
                                                 imagePath: library/nginx
                                                 tag: <+input>
                                             identifier: dev
                                             type: DockerRegistry
                                       - sidecar:
                                             spec:
-                                                connectorRef: public_dockerhub
+                                                connectorRef: account.Rohan_Dockerhub
                                                 imagePath: library/nginx
                                                 tag: <+input>
                                             identifier: qa

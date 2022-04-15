@@ -69,30 +69,9 @@ pipeline:
                                       spec:
                                           connectorRef: account.Rohan_Dockerhub
                                           imagePath: library/nginx
-                                          tag: <+input>
+                                          tagRegex: "*latest"
                                       type: DockerRegistry
-                                  sidecars:
-                                      - sidecar:
-                                            spec:
-                                                connectorRef: account.Rohan_Dockerhub
-                                                imagePath: library/nginx
-                                                tag: <+input>
-                                            identifier: proxy
-                                            type: DockerRegistry
-                                      - sidecar:
-                                            spec:
-                                                connectorRef: account.Rohan_Dockerhub
-                                                imagePath: library/nginx
-                                                tag: <+input>
-                                            identifier: dev
-                                            type: DockerRegistry
-                                      - sidecar:
-                                            spec:
-                                                connectorRef: account.Rohan_Dockerhub
-                                                imagePath: library/nginx
-                                                tag: <+input>
-                                            identifier: qa
-                                            type: DockerRegistry
+                                  sidecars: []
                   infrastructure:
                       environmentRef: rohandev
                       infrastructureDefinition:

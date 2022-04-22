@@ -24,7 +24,7 @@ template:
                           identifier: Havan
                           spec:
                               connectorRef: public_dockerhub
-                              repo: srgupta:5328
+                              repo: <+service.name>-<+env.name>
                               tags:
                                   - dev
                                   - qa

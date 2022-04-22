@@ -23,7 +23,7 @@ template:
                           name: Havan
                           identifier: Havan
                           spec:
-                              connectorRef: public_dockerhub
+                              connectorRef: dockerhub
                               repo: <+service.name>-<+env.name>
                               tags:
                                   - dev

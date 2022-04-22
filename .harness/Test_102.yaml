@@ -27,6 +27,4 @@ template:
                               repo: <+service.name>-<+env.name>
                               tags:
                                   - dev
-                                  - qa
-                                  - prod
                               optimize: true

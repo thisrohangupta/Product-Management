@@ -27,3 +27,6 @@ template:
                               repo: srgupta:5328
                               tags:
                                   - dev
+                                  - qa
+                                  - prod
+                              optimize: true

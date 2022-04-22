@@ -1,0 +1,32 @@
+template:
+    name: Test
+    identifier: Test
+    versionLabel: 1.0.2
+    type: Stage
+    projectIdentifier: CD_Product_Team
+    orgIdentifier: default
+    tags: {}
+    spec:
+        type: CI
+        spec:
+            cloneCodebase: true
+            infrastructure:
+                type: KubernetesDirect
+                spec:
+                    connectorRef: rohan_product_cluster
+                    namespace: dev
+                    automountServiceAccountToken: true
+            execution:
+                steps:
+                    - step:
+                          type: BuildAndPushDockerRegistry
+                          name: Havan
+                          identifier: Havan
+                          spec:
+                              connectorRef: public_dockerhub
+                              repo: <+service.name>-<+env.name>
+                              tags:
+                                  - dev
+                                  - qa
+                                  - prod
+                              optimize: true

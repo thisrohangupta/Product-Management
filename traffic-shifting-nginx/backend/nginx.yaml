@@ -1,0 +1,43 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: {{.Values.name}}
+spec:
+  host: {{.Values.host}}
+  upstreams:
+  - name: {{.Values.primaryName}}
+    service: {{.Values.primaryName}}
+    port: 80
+  - name: {{.Values.stageName}}
+    service: {{.Values.stageName}}
+    port: 80
+  subroutes:
+  - path: /{{.Values.primaryEndpoint}}
+    action:
+      proxy:
+        upstream: {{.Values.primaryName}}
+        rewritePath: /color/index.html
+  - path: /{{.Values.stageEndpoint}}
+    action:
+      proxy:
+        upstream: {{.Values.stageName}}
+        rewritePath: /color/index.html
+  - path: /{{.Values.endpoint}}
+    {{- if .Values.splitTraffic}}
+    splits:
+    - weight: {{.Values.primaryWeight}}
+      action:
+        proxy:
+          upstream: {{.Values.primaryName}}
+          rewritePath: /color/index.html
+    - weight: {{.Values.stageWeight}}
+      action:
+        proxy:
+          upstream: {{.Values.stageName}}
+          rewritePath: /color/index.html
+    {{- else}}
+    action:
+      proxy:
+        upstream: {{.Values.primaryName}}
+        rewritePath: /color/index.html
+    {{- end}}

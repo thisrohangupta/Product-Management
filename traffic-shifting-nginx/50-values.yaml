@@ -1,0 +1,3 @@
+splitTraffic: true
+primaryWeight: 50
+stageWeight: 50

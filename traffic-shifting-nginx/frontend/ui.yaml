@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.frontend.uiPath}}
+  annotations:
+    harness.io/direct-apply: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{.Values.frontend.uiPath}}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{.Values.frontend.uiPath}}
+    spec:
+      terminationGracePeriodSeconds: 2
+      containers:
+      - name: color-ui
+        image: {{.Values.frontend.image}}
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: LOAD_BALANCER
+          value: {{.Values.frontend.loadBalancer}}
+        - name: ENDPOINT
+          value: {{.Values.endpoint}}
+        - name: TARGET1
+          value: {{.Values.stageEndpoint}}
+        - name: TARGET2
+          value: {{.Values.primaryEndpoint}}
+        - name: TITLE
+          value: {{.Values.frontend.title}}
+        - name: UI_PATH
+          value: {{.Values.frontend.uiPath}}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            memory: 50Mi
+            cpu: 10m
+          requests:
+            memory: 50Mi
+            cpu: 10m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.frontend.uiPath}}
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: {{.Values.frontend.uiPath}}
+  type: ClusterIP
+---
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: {{.Values.frontend.uiPath}}
+spec:
+  host: {{.Values.host}}
+  upstreams:
+  - name: {{.Values.frontend.uiPath}}
+    service: {{.Values.frontend.uiPath}}
+    port: 80
+  subroutes:
+  - path: /{{.Values.frontend.uiPath}}
+    action:
+      proxy:
+        upstream: {{.Values.frontend.uiPath}}
+        rewritePath: /

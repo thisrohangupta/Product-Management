@@ -31,7 +31,7 @@ pipeline:
                                                     connectorRef: ThisRohanGupta_Repo
                                                     gitFetchType: Branch
                                                     paths:
-                                                        - cdng/
+                                                        - main/
                                                     branch: main
                                             skipResourceVersioning: false
                               artifacts:

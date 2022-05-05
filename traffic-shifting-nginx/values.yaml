@@ -1,18 +1,18 @@
-name: ${serviceVariable.name}
-host: ${serviceVariable.host}
-image: ${artifact.metadata.image}
-stageName: ${serviceVariable.stageName}
-primaryName: ${serviceVariable.primaryName}
+name: <+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.name>
+host: <+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.host>
+image: <+artifact.image>
+stageName: <+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.stageName>
+primaryName: <+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.primaryName>
 endpoint: color-bg
 stageEndpoint: color-bg-stage
 primaryEndpoint: color-bg-primary
 splitTraffic: false
 
 replicas: 2
-namespace: ${infra.kubernetes.namespace}
+namespace: <+infra.namespace>
 
 frontend:
   title: Nginx - Blue/Green Traffic Shift
-  loadBalancer: http://${serviceVariable.host}
-  uiPath: ${serviceVariable.uiPath}
+  loadBalancer: http://<+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.host>
+  uiPath: <+pipeline.stages.Deploy_to_Dev.spec.serviceConfig.serviceDefinition.spec.variables.uiPath>
   image: us.gcr.io/sales-209522/continuous-requests:110

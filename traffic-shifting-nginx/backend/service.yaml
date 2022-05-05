@@ -1,0 +1,49 @@
+#
+# Service targeting primary
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.primaryName}}
+  annotations:
+    harness.io/primary-service: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: {{.Values.name}}
+---
+#
+# Service targeting stage
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.stageName}}
+  annotations:
+    harness.io/stage-service: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: {{.Values.name}}
+---
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: {{.Values.name}}
+spec:
+  host: {{.Values.host}}
+  routes:
+  - path: /{{.Values.endpoint}}
+    route: {{.Values.name}}
+  - path: /{{.Values.frontend.uiPath}}
+    route: {{.Values.frontend.uiPath}}

@@ -62,6 +62,7 @@ pipeline:
                                     outputVariables: []
                                     executionTarget: {}
                                 timeout: 10m
+                                failureStrategies: []
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

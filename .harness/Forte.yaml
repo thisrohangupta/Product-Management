@@ -33,12 +33,6 @@ pipeline:
                                                     branch: dev
                                             skipResourceVersioning: false
                               artifacts:
-                                  primary:
-                                      spec:
-                                          connectorRef: account.Rohan_Dockerhub
-                                          imagePath: library/nginx
-                                          tagRegex: "*latest"
-                                      type: DockerRegistry
                                   sidecars: []
                   infrastructure:
                       environmentRef: rohandev

@@ -89,4 +89,4 @@ pipeline:
           value: <+input>
         - name: namespace
           type: String
-          value: hello<+pipeline.variables.deployment_number>
+          value: hello+<+pipeline.variables.deployment_number>

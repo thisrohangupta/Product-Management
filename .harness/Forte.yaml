@@ -61,6 +61,8 @@ pipeline:
                                     environmentVariables: []
                                     outputVariables: []
                                     executionTarget: {}
+                                    delegateSelectors:
+                                        - rohan-docker-delegate
                                 timeout: 10m
                                 failureStrategies: []
                       rollbackSteps:

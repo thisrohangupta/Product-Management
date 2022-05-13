@@ -57,7 +57,7 @@ pipeline:
                                         spec:
                                             script: |-
                                                 echo <+pipeline.variables.deployment_number>
-                                                echo "<+pipeline.variables.namespace>
+                                                echo <+pipeline.variables.namespace>
                                     environmentVariables: []
                                     outputVariables: []
                                     executionTarget: {}

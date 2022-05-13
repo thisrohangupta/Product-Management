@@ -53,8 +53,8 @@ pipeline:
                       steps:
                           - step:
                                 type: ShellScript
-                                name: Printing Images
-                                identifier: Printing_Images
+                                name: print
+                                identifier: print
                                 spec:
                                     shell: Bash
                                     onDelegate: true
@@ -62,33 +62,12 @@ pipeline:
                                         type: Inline
                                         spec:
                                             script: |-
-                                                echo "Print From CI"
-                                                echo <+pipeline.stages.Build_Service_API.variables.api_image>
-
-                                                echo "print from CD Artifact section"
-                                                echo "****Primary****"
-                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.primary.spec.imagePath>
-
-                                                echo "****Image 2****"
-                                                echo  <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.proxy.spec.imagePath>
-
-
-                                                echo "****Image 3****"
-                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.dev.spec.imagePath>
-
-                                                echo "****Image 4***"
-                                                echo <+pipeline.stages.Deploy_Service_API.spec.serviceConfig.serviceDefinition.spec.artifacts.sidecars.qa.spec.imagePath>
+                                                echo <+pipeline.variables.deployment_number>
+                                                echo "<+pipeline.variables.namespace>
                                     environmentVariables: []
                                     outputVariables: []
                                     executionTarget: {}
                                 timeout: 10m
-                          - step:
-                                name: Rollout Deployment
-                                identifier: rolloutDeployment
-                                type: K8sRollingDeploy
-                                timeout: 10m
-                                spec:
-                                    skipDryRun: false
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment
@@ -104,3 +83,10 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+    variables:
+        - name: deployment_number
+          type: String
+          value: <+input>
+        - name: namespace
+          type: String
+          value: hello<+pipeline.variables.deployment_number>

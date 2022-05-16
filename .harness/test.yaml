@@ -1,0 +1,16 @@
+connector:
+  name: test
+  identifier: test
+  description:
+  orgIdentifier: default
+  projectIdentifier: CD_Product_Team
+  type: Azure
+  spec:
+    credential:
+      type: InheritFromDelegate
+      spec:
+        auth:
+          type: SystemAssignedManagedIdentity
+    delegateSelectors:
+    - local-rohan
+    azureEnvironmentType: AZURE

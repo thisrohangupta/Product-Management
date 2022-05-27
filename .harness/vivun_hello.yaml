@@ -1,0 +1,48 @@
+pipeline:
+    name: vivun hello
+    identifier: vivun_hello
+    projectIdentifier: CD_Product_Team
+    orgIdentifier: default
+    tags: {}
+    properties:
+        ci:
+            codebase:
+                connectorRef: ProductManagementRepo
+                build: <+input>
+    stages:
+        - stage:
+              name: Build Ephemeral Backend
+              identifier: Build_Ephemeral_Backend
+              type: CI
+              spec:
+                  cloneCodebase: true
+                  sharedPaths:
+                      - /vars/run
+                  infrastructure:
+                      type: KubernetesDirect
+                      spec:
+                          connectorRef: rohansandbox
+                          namespace: <+input>
+                          automountServiceAccountToken: true
+                          nodeSelector: {}
+                  execution:
+                      steps:
+                          - step:
+                                type: BuildAndPushECR
+                                name: test
+                                identifier: test
+                                spec:
+                                    connectorRef: <+input>
+                                    region: <+input>
+                                    account: <+input>
+                                    imageName: <+input>
+                                    tags:
+                                        - test
+                                when:
+                                    stageStatus: Success
+                                    condition: if <+pipeline.variables.frontEndOnly> == true
+                                failureStrategies: []
+    variables:
+        - name: branch
+          type: String
+          value: <+input>

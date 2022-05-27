@@ -1,0 +1,20 @@
+template:
+    name: New Step Template Name
+    identifier: new_step_template_name
+    versionLabel: 1.0.1
+    type: Step
+    projectIdentifier: CD_Product_Team
+    orgIdentifier: default
+    spec:
+        type: ShellScript
+        spec:
+            shell: Bash
+            onDelegate: true
+            source:
+                type: Inline
+                spec:
+                    script: "azure webapp rollback <+service.name> "
+            environmentVariables: []
+            outputVariables: []
+            executionTarget: {}
+        timeout: 10m

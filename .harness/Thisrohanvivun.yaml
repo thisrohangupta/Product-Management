@@ -1,0 +1,22 @@
+connector:
+  name: Thisrohanvivun
+  identifier: Thisrohanvivun
+  description:
+  orgIdentifier: default
+  projectIdentifier: CD_Product_Team
+  type: Github
+  spec:
+    url: https://github.com/thisrohangupta/Product-Management.git
+    authentication:
+      type: Http
+      spec:
+        type: UsernameToken
+        spec:
+          username: ThisRohanGupta
+          tokenRef: Rohan_Personal_Access_Token
+    apiAccess:
+      type: Token
+      spec:
+        tokenRef: Rohan_Personal_Access_Token
+    executeOnDelegate: false
+    type: Repo

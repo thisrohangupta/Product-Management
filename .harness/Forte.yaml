@@ -13,7 +13,7 @@ pipeline:
               type: Deployment
               spec:
                   serviceConfig:
-                      serviceRef: KIGHTWING_SERVICE
+                      serviceRef: <+input>
                       serviceDefinition:
                           type: Kubernetes
                           spec:
@@ -26,16 +26,17 @@ pipeline:
                                             store:
                                                 type: Github
                                                 spec:
-                                                    connectorRef: ProductManagementRepo
+                                                    connectorRef: <+input>
                                                     gitFetchType: Branch
                                                     paths:
-                                                        - cdng/
-                                                    branch: dev
+                                                        - cdng/<+service.name>/deploy/
+                                                    repoName: <+input>
+                                                    branch: <+input>
                                             skipResourceVersioning: false
                               artifacts:
                                   sidecars: []
                   infrastructure:
-                      environmentRef: rohandev
+                      environmentRef: <+input>
                       infrastructureDefinition:
                           type: KubernetesDirect
                           spec:

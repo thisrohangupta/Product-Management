@@ -1,6 +1,9 @@
 inputSet:
   identifier: "notificationdevteamA"
   name: "notification-dev-teamA"
+  tags:
+    teamA: ""
+    Active: ""
   orgIdentifier: "default"
   projectIdentifier: "CD_Product_Team"
   pipeline:

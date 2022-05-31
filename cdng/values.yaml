@@ -18,6 +18,6 @@ serviceTargetPort: 80
 
 env:
   config:
-    key1: harnessDemo
+    key1: <+env.name>
   secrets:
-    key2: sandbox
+    key2: <+infra.namespace>

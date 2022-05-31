@@ -18,6 +18,6 @@ serviceTargetPort: 80
 
 env:
   config:
-    key1: <+env.name>
+    environment: dev
   secrets:
-    key2: <+infra.namespace>
+    infrastructure: <+infra.namespace>

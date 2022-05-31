@@ -1,4 +1,4 @@
 name: <+service.name>
-replicas: 2
-createNamespace: false
+replicas: 1
+createNamespace: true
 namespace: <+infra.namespace>

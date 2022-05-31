@@ -1,0 +1,33 @@
+inputSet:
+  identifier: "notificationdevteamA"
+  name: "notification-dev-teamA"
+  orgIdentifier: "default"
+  projectIdentifier: "CD_Product_Team"
+  pipeline:
+    identifier: "Forte"
+    stages:
+    - stage:
+        identifier: "Deploy_Service_API"
+        type: "Deployment"
+        spec:
+          serviceConfig:
+            serviceRef: "nginx"
+            serviceDefinition:
+              type: "Kubernetes"
+              spec:
+                manifests:
+                - manifest:
+                    identifier: "dev"
+                    type: "K8sManifest"
+                    spec:
+                      store:
+                        type: "Github"
+                        spec:
+                          connectorRef: "Sample_Connector"
+                          branch: "main"
+          infrastructure:
+            environmentRef: "Dev"
+    variables:
+    - name: "deployment_number"
+      type: "String"
+      value: "test"

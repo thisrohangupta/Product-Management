@@ -20,4 +20,4 @@ env:
   config:
     environment: dev
   secrets:
-    infrastructure: <+infra.namespace>
+    infrastructure: test

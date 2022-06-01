@@ -53,27 +53,6 @@ pipeline:
                   execution:
                       steps:
                           - stepGroup:
-                                name: Canary Deployment
-                                identifier: canaryDepoyment
-                                steps:
-                                    - step:
-                                          name: Canary Deployment
-                                          identifier: canaryDeployment
-                                          type: K8sCanaryDeploy
-                                          timeout: 10m
-                                          spec:
-                                              instanceSelection:
-                                                  type: Count
-                                                  spec:
-                                                      count: 1
-                                              skipDryRun: false
-                                    - step:
-                                          name: Canary Delete
-                                          identifier: canaryDelete
-                                          type: K8sCanaryDelete
-                                          timeout: 10m
-                                          spec: {}
-                          - stepGroup:
                                 name: Primary Deployment
                                 identifier: primaryDepoyment
                                 steps:
@@ -97,6 +76,7 @@ pipeline:
                                 type: K8sRollingRollback
                                 timeout: 10m
                                 spec: {}
+                  serviceDependencies: []
               tags: {}
               failureStrategies:
                   - onFailure:

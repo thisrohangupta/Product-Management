@@ -1,4 +1,4 @@
-name: <+service.name>
+name: <+service.name>-prod
 replicas: 1
 image: <+artifact.image>
 

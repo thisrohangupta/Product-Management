@@ -20,4 +20,4 @@ env:
   config:
     environment: dev
   secrets:
-    infrastructure: <+infra.namespace>
+    rohanFile: <+pipeline.stages.Deploy_to_L3.spec.serviceConfig.serviceDefinition.spec.variables.encryptedFile>

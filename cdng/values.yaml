@@ -19,5 +19,4 @@ serviceTargetPort: 80
 env:
   config:
     environment: dev
-  secrets:
-    rohanFile: <+pipeline.stages.Deploy_to_L3.spec.serviceConfig.serviceDefinition.spec.variables.encryptedFile>
+

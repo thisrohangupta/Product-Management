@@ -4,9 +4,9 @@
   ],
   "containerDefinitions": [
     {
-      "name": <+service.name>,
-      "image": <+artifact.image>,
-      "memory": 256,
+      "name": "<+service.name>",
+      "image": "<+artifact.image>",
+      "memory": "<+serviceVariable.memory>",
       "cpu": 256,
       "essential": true,
       "portMappings": [

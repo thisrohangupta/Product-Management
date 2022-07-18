@@ -1,0 +1,50 @@
+inputSet:
+  identifier: "Deploy_Nginx"
+  name: "Deploy Nginx"
+  orgIdentifier: "default"
+  projectIdentifier: "Rohan"
+  pipeline:
+    identifier: "Harness_Demo"
+    stages:
+    - stage:
+        identifier: "Deploy_to_L3"
+        type: "Deployment"
+        spec:
+          service:
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "stable-perl"
+    - stage:
+        identifier: "Deploy_to_L2"
+        type: "Deployment"
+        spec:
+          service:
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "stable-perl"
+    - stage:
+        identifier: "Deploy_to_L1"
+        type: "Deployment"
+        spec:
+          service:
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "stable-perl"

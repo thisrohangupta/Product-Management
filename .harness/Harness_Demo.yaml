@@ -51,3 +51,49 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - stage:
+              name: Deploy to L2
+              identifier: Deploy_to_L2
+              description: ""
+              type: Deployment
+              spec:
+                  deploymentType: Kubernetes
+                  service:
+                      serviceRef: publicnginx
+                      serviceInputs:
+                          serviceDefinition:
+                              type: Kubernetes
+                              spec:
+                                  artifacts:
+                                      primary:
+                                          type: DockerRegistry
+                                          spec:
+                                              tag: <+input>
+                  environment:
+                      environmentRef: L2
+                      deployToAll: false
+                      infrastructureDefinitions:
+                          - identifier: L2_K8s
+                  execution:
+                      steps:
+                          - step:
+                                name: Rollout Deployment
+                                identifier: rolloutDeployment
+                                type: K8sRollingDeploy
+                                timeout: 10m
+                                spec:
+                                    skipDryRun: false
+                      rollbackSteps:
+                          - step:
+                                name: Rollback Rollout Deployment
+                                identifier: rollbackRolloutDeployment
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

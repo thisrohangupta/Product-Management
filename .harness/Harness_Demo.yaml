@@ -97,3 +97,125 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+        - stage:
+              name: Approval to Production
+              identifier: Approval_to_Production
+              description: ""
+              type: Approval
+              spec:
+                  execution:
+                      steps:
+                          - step:
+                                name: Harness Production Approval
+                                identifier: Harness_Production_Approval
+                                type: HarnessApproval
+                                timeout: 1d
+                                spec:
+                                    approvalMessage: |-
+                                        Please review the following information
+                                        and approve the pipeline progression
+                                    includePipelineExecutionHistory: true
+                                    approvers:
+                                        minimumCount: 1
+                                        disallowPipelineExecutor: false
+                                        userGroups:
+                                            - account.ProductManagement
+                                    approverInputs: []
+              tags: {}
+        - stage:
+              name: Deploy to L1
+              identifier: Deploy_to_L1
+              description: ""
+              type: Deployment
+              spec:
+                  deploymentType: Kubernetes
+                  service:
+                      serviceRef: publicnginx
+                      serviceInputs:
+                          serviceDefinition:
+                              type: Kubernetes
+                              spec:
+                                  artifacts:
+                                      primary:
+                                          type: DockerRegistry
+                                          spec:
+                                              tag: <+input>
+                  environment:
+                      environmentRef: L1
+                      deployToAll: false
+                      infrastructureDefinitions:
+                          - identifier: L1_K8s
+                  execution:
+                      steps:
+                          - stepGroup:
+                                name: Canary Deployment
+                                identifier: canaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Canary Deployment
+                                          identifier: canaryDeployment
+                                          type: K8sCanaryDeploy
+                                          timeout: 10m
+                                          spec:
+                                              instanceSelection:
+                                                  type: Count
+                                                  spec:
+                                                      count: 1
+                                              skipDryRun: false
+                                    - step:
+                                          name: Canary Delete
+                                          identifier: canaryDelete
+                                          type: K8sCanaryDelete
+                                          timeout: 10m
+                                          spec: {}
+                          - stepGroup:
+                                name: Primary Deployment
+                                identifier: primaryDepoyment
+                                steps:
+                                    - step:
+                                          name: Rolling Deployment
+                                          identifier: rollingDeployment
+                                          type: K8sRollingDeploy
+                                          timeout: 10m
+                                          spec:
+                                              skipDryRun: false
+                          - step:
+                                type: HarnessApproval
+                                name: Cleanup Demo
+                                identifier: Cleanup_Demo
+                                spec:
+                                    approvalMessage: Please review the following information and approve the pipeline progression
+                                    includePipelineExecutionHistory: true
+                                    approvers:
+                                        userGroups:
+                                            - account.ProductManagement
+                                        minimumCount: 1
+                                        disallowPipelineExecutor: false
+                                    approverInputs: []
+                                timeout: 1d
+                          - step:
+                                name: Cleanup Cluster
+                                identifier: Cleanup_Cluster
+                                template:
+                                    templateRef: Cleanup_Demo
+                                    versionLabel: 0.0.1
+                      rollbackSteps:
+                          - step:
+                                name: Canary Delete
+                                identifier: rollbackCanaryDelete
+                                type: K8sCanaryDelete
+                                timeout: 10m
+                                spec: {}
+                          - step:
+                                name: Rolling Rollback
+                                identifier: rollingRollback
+                                type: K8sRollingRollback
+                                timeout: 10m
+                                spec: {}
+              tags: {}
+              failureStrategies:
+                  - onFailure:
+                        errors:
+                            - AllErrors
+                        action:
+                            type: StageRollback

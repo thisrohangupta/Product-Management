@@ -37,6 +37,12 @@ pipeline:
                                 timeout: 10m
                                 spec:
                                     skipDryRun: false
+                          - step:
+                                name: Clean up L3
+                                identifier: Clean_up_L3
+                                template:
+                                    templateRef: Cleanup_Demo
+                                    versionLabel: 0.0.1
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment
@@ -83,6 +89,12 @@ pipeline:
                                 timeout: 10m
                                 spec:
                                     skipDryRun: false
+                          - step:
+                                name: Clean up L2
+                                identifier: Clean_up_L2
+                                template:
+                                    templateRef: Cleanup_Demo
+                                    versionLabel: 0.0.1
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

@@ -100,28 +100,9 @@ pipeline:
         - stage:
               name: Approval to Production
               identifier: Approval_to_Production
-              description: ""
-              type: Approval
-              spec:
-                  execution:
-                      steps:
-                          - step:
-                                name: Harness Production Approval
-                                identifier: Harness_Production_Approval
-                                type: HarnessApproval
-                                timeout: 1d
-                                spec:
-                                    approvalMessage: |-
-                                        Please review the following information
-                                        and approve the pipeline progression
-                                    includePipelineExecutionHistory: true
-                                    approvers:
-                                        minimumCount: 1
-                                        disallowPipelineExecutor: false
-                                        userGroups:
-                                            - account.ProductManagement
-                                    approverInputs: []
-              tags: {}
+              template:
+                  templateRef: Approval_to_Production
+                  versionLabel: 0.0.1
         - stage:
               name: Deploy to L1
               identifier: Deploy_to_L1

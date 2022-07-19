@@ -1,5 +1,5 @@
 name: <+service.name>
-replicas: <+service.variables.replicas>
+replicas: <+service.variable.replicas>
 image: <+artifact.image>
 
 # Namespace Configuration

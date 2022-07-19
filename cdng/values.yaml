@@ -2,7 +2,7 @@ name: <+service.name>
 replicas: 1
 image: <+artifact.image>
 
-
+# Namespace Configuration
 createNamespace: true
 namespace: <+infra.namespace>
 

@@ -43,21 +43,6 @@ pipeline:
                                 template:
                                     templateRef: Cleanup_Demo
                                     versionLabel: 0.0.1
-                          - step:
-                                type: ShellScript
-                                name: test
-                                identifier: test
-                                spec:
-                                    shell: Bash
-                                    onDelegate: true
-                                    source:
-                                        type: Inline
-                                        spec:
-                                            script: bal
-                                    environmentVariables: []
-                                    outputVariables: []
-                                    executionTarget: {}
-                                timeout: 10m
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

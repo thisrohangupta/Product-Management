@@ -212,3 +212,8 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+    variables:
+        - name: branch
+          type: String
+          default: main
+          value: <+input>.allowedValues(main,dev,qa)

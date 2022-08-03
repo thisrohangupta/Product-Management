@@ -1,6 +1,7 @@
 inputSet:
   identifier: "Deploy_Nginx"
   name: "Deploy Nginx"
+  tags: {}
   orgIdentifier: "default"
   projectIdentifier: "Rohan"
   pipeline:
@@ -48,3 +49,7 @@ inputSet:
                       type: "DockerRegistry"
                       spec:
                         tag: "stable-perl"
+    variables:
+    - name: "branch"
+      type: "String"
+      value: "main"

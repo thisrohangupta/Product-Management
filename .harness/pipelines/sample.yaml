@@ -1,0 +1,26 @@
+pipeline:
+    name: sample
+    identifier: sample
+    projectIdentifier: Rohan
+    orgIdentifier: default
+    tags: {}
+    stages:
+        - stage:
+              name: Deploy
+              identifier: Deploy
+              template:
+                  templateRef: Rolling_Deploy
+                  versionLabel: 0.0.1
+                  templateInputs:
+                      type: Deployment
+                      spec:
+                          service:
+                              serviceInputs:
+                                  serviceDefinition:
+                                      type: Kubernetes
+                                      spec:
+                                          artifacts:
+                                              primary:
+                                                  type: DockerRegistry
+                                                  spec:
+                                                      tag: <+input>

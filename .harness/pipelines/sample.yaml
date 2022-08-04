@@ -6,7 +6,7 @@ pipeline:
     tags: {}
     stages:
         - stage:
-              name: Deploy
+              name: rohan
               identifier: Deploy
               template:
                   templateRef: Rolling_Deploy

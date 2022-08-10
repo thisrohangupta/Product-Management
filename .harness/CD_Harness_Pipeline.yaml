@@ -6,7 +6,7 @@ pipeline:
     tags: {}
     stages:
         - stage:
-              name: Deploy
+              name: Deploy1
               identifier: Deploy
               description: ""
               type: Deployment
@@ -51,3 +51,7 @@ pipeline:
                             - AllErrors
                         action:
                             type: StageRollback
+              variables:
+                  - name: foo
+                    type: String
+                    value: ""

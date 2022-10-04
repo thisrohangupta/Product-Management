@@ -62,6 +62,18 @@ pipeline:
                         timeout: 10m
                         spec:
                           skipDryRun: false
+              - step:
+                  type: K8sApply
+                  name: dev
+                  identifier: dev
+                  spec:
+                    filePaths:
+                      - apply/
+                    skipDryRun: false
+                    skipSteadyStateCheck: false
+                    skipRendering: false
+                    overrides: []
+                  timeout: 10m
             rollbackSteps:
               - step:
                   name: Canary Delete

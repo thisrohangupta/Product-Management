@@ -147,3 +147,25 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: test
+        identifier: test
+        description: ""
+        type: FeatureFlag
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: FlagConfiguration
+                  name: test
+                  identifier: test
+                  spec:
+                    feature: testing
+                    environment: TestCiscoPlusEnv
+                    instructions:
+                      - identifier: SetDefaultVariationsIdentifier
+                        type: SetDefaultVariations
+                        spec:
+                          "on": "true"
+                          "off": "false"
+                  timeout: 10m

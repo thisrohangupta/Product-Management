@@ -32,33 +32,3 @@ pipeline:
                         defaultValue: <+pipeline.triggeredBy.name>
                     approvalMessage: "Welcome to Harness - this the Pipeline: <+pipeline.name> , the start time was <+pipeline.startTs>"
         tags: {}
-    - stage:
-        name: Deploy
-        identifier: Deploy
-        template:
-          templateRef: CD_Stage_Charter
-          versionLabel: 1.0.0
-          templateInputs:
-            type: Deployment
-            spec:
-              environment:
-                environmentRef: <+input>
-                environmentInputs: <+input>
-                serviceOverrideInputs: <+input>
-                infrastructureDefinitions: <+input>
-    - stage:
-        name: Dev Deploy
-        identifier: Dev_Deploy
-        template:
-          templateRef: account.Deploy_K8s
-          templateInputs:
-            type: Deployment
-            spec:
-              service:
-                serviceRef: <+input>
-                serviceInputs: <+input>
-              environment:
-                environmentRef: <+input>
-                environmentInputs: <+input>
-                serviceOverrideInputs: <+input>
-                infrastructureDefinitions: <+input>

@@ -6,6 +6,33 @@ pipeline:
   tags: {}
   stages:
     - stage:
+        name: Approval
+        identifier: Approval
+        description: ""
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: Approval
+                  identifier: Approval
+                  type: HarnessApproval
+                  timeout: 1d
+                  spec:
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: true
+                      userGroups:
+                        - account.ProductManagement
+                    approverInputs:
+                      - name: PipelineStatus
+                        defaultValue: Running
+                      - name: Approver
+                        defaultValue: <+pipeline.triggeredBy.name>
+                    approvalMessage: "Welcome to Harness - this the Pipeline: <+pipeline.name> , the start time was <+pipeline.startTs>"
+        tags: {}
+    - stage:
         name: Deploy
         identifier: Deploy
         template:
@@ -35,30 +62,3 @@ pipeline:
                 environmentInputs: <+input>
                 serviceOverrideInputs: <+input>
                 infrastructureDefinitions: <+input>
-    - stage:
-        name: Approval
-        identifier: Approval
-        description: ""
-        type: Approval
-        spec:
-          execution:
-            steps:
-              - step:
-                  name: Approval
-                  identifier: Approval
-                  type: HarnessApproval
-                  timeout: 1d
-                  spec:
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      minimumCount: 1
-                      disallowPipelineExecutor: true
-                      userGroups:
-                        - account.ProductManagement
-                    approverInputs:
-                      - name: PipelineStatus
-                        defaultValue: Running
-                      - name: Approver
-                        defaultValue: <+pipeline.triggeredBy.name>
-                    approvalMessage: "Welcome to Harness - this the Pipeline: <+pipeline.name> , the start time was <+pipeline.startTs>"
-        tags: {}

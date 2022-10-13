@@ -1,0 +1,34 @@
+pipeline:
+  name: K8s Helm CD Pipeline
+  identifier: K8s_Helm_CD_Pipeline
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Approval
+        identifier: Approval
+        description: ""
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: Approval
+                  identifier: Approval
+                  type: HarnessApproval
+                  timeout: 1d
+                  spec:
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                      userGroups:
+                        - account.ProductManagement
+                    approverInputs:
+                      - name: PipelineStatus
+                        defaultValue: Running
+                      - name: Approver
+                        defaultValue: <+pipeline.triggeredBy.name>
+                    approvalMessage: "Welcome to Harness - this the Pipeline: <+pipeline.name> , the start time was <+pipeline.startTs>"
+        tags: {}

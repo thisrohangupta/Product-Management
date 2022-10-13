@@ -22,7 +22,7 @@ pipeline:
                     includePipelineExecutionHistory: true
                     approvers:
                       minimumCount: 1
-                      disallowPipelineExecutor: true
+                      disallowPipelineExecutor: false
                       userGroups:
                         - account.ProductManagement
                     approverInputs:

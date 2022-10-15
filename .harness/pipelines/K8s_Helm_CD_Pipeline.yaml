@@ -14,6 +14,15 @@ pipeline:
           deploymentType: Kubernetes
           service:
             serviceRef: redis
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      type: DockerRegistry
+                      spec:
+                        tag: <+input>
           environment:
             environmentRef: staging
             deployToAll: false

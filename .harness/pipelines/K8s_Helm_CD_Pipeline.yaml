@@ -63,3 +63,8 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+  variables:
+    - name: releaseName
+      type: String
+      description: ""
+      value: <+input>

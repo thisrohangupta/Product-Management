@@ -24,9 +24,13 @@ pipeline:
                     shell: Sh
                     command: echo "Hello world"
           infrastructure:
-            type: KubernetesHosted
+            type: KubernetesDirect
             spec:
-              identifier: k8s-hosted-infra
+              connectorRef: rohangkeautopilot
+              namespace: rohan-pm
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
     - stage:
         name: Approve
         identifier: Approve

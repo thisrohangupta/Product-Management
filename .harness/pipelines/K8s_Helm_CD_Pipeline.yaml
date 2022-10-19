@@ -22,3 +22,4 @@ pipeline:
       type: String
       description: ""
       value: <+input>
+  allowStageExecutions: true

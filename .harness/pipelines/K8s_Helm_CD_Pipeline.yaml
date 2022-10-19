@@ -6,57 +6,6 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: Build
-        identifier: Build
-        description: ""
-        type: CI
-        spec:
-          cloneCodebase: true
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: Hello World
-                  identifier: Hello_World
-                  spec:
-                    connectorRef: public_dockerhub
-                    image: alpine
-                    shell: Sh
-                    command: echo "Hello world"
-          infrastructure:
-            type: KubernetesDirect
-            spec:
-              connectorRef: pmk8scluster
-              namespace: rohan-pm
-              automountServiceAccountToken: true
-              nodeSelector: {}
-              os: Linux
-    - stage:
-        name: Approve
-        identifier: Approve
-        description: ""
-        type: Approval
-        spec:
-          execution:
-            steps:
-              - step:
-                  name: approve
-                  identifier: approve
-                  type: HarnessApproval
-                  timeout: 1d
-                  spec:
-                    approvalMessage: |-
-                      Please review the following information
-                      and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                      userGroups:
-                        - account._account_all_users
-                    approverInputs: []
-        tags: {}
-    - stage:
         name: Deploy Chart
         identifier: Deploy_Chart
         description: ""
@@ -64,16 +13,8 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: redis
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  artifacts:
-                    primary:
-                      type: DockerRegistry
-                      spec:
-                        tag: <+input>
+            serviceRef: <+input>
+            serviceInputs: <+input>
           environment:
             environmentRef: staging
             deployToAll: false
@@ -114,58 +55,8 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
-    - stage:
-        name: Print Shell
-        identifier: Print_Shell
-        description: ""
-        type: Custom
-        spec:
-          execution:
-            steps:
-              - step:
-                  type: ShellScript
-                  name: Custom Shell
-                  identifier: Custom_Shell
-                  spec:
-                    shell: Bash
-                    onDelegate: true
-                    source:
-                      type: Inline
-                      spec:
-                        script: echo "Hola"
-                    environmentVariables: []
-                    outputVariables: []
-                  timeout: 10m
-        tags: {}
-    - stage:
-        name: FF
-        identifier: FF
-        description: ""
-        type: FeatureFlag
-        spec:
-          execution:
-            steps:
-              - step:
-                  type: FlagConfiguration
-                  name: test
-                  identifier: test
-                  spec:
-                    feature: deployment
-                    environment: staging
-                    instructions:
-                      - identifier: SetFeatureFlagStateIdentifier
-                        type: SetFeatureFlagState
-                        spec:
-                          state: "on"
-                  timeout: 10m
   variables:
     - name: releaseName
       type: String
       description: ""
       value: <+input>
-  properties:
-    ci:
-      codebase:
-        connectorRef: ProductManagementRohan
-        repoName: Product-Management
-        build: <+input>

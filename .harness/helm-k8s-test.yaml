@@ -1,0 +1,26 @@
+inputSet:
+  identifier: "helmk8stest"
+  pipeline:
+    identifier: "K8s_Helm_CD_Pipeline"
+    stages:
+    - stage:
+        identifier: "Redis"
+        type: "Deployment"
+        spec:
+          service:
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "rc-buster"
+    variables:
+    - name: "releaseName"
+      type: "String"
+      value: "<+service.name>"
+  name: "helm-k8s-test"
+  orgIdentifier: "default"
+  projectIdentifier: "Rohan"

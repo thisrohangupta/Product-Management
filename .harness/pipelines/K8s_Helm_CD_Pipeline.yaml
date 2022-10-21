@@ -38,6 +38,16 @@ pipeline:
                   spec:
                     skipDryRun: false
                     pruningEnabled: false
+              - step:
+                  type: K8sDelete
+                  name: clean up demo
+                  identifier: clean_up_demo
+                  spec:
+                    deleteResources:
+                      type: ReleaseName
+                      spec:
+                        deleteNamespace: false
+                  timeout: 10m
             rollbackSteps:
               - step:
                   name: Rollback Rollout Deployment

@@ -63,6 +63,17 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: dev
+        identifier: dev
+        template:
+          templateRef: Rolling_Deployment_Dev
+          versionLabel: 0.0.1
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: nginx
   variables:
     - name: releaseName
       type: String

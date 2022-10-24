@@ -48,6 +48,13 @@ pipeline:
                       spec:
                         deleteNamespace: false
                   timeout: 10m
+              - step:
+                  type: Barrier
+                  name: banking-app
+                  identifier: bankingapp
+                  spec:
+                    barrierRef: <+input>
+                  timeout: 10m
             rollbackSteps:
               - step:
                   name: Rollback Rollout Deployment
@@ -56,56 +63,6 @@ pipeline:
                   timeout: 10m
                   spec:
                     pruningEnabled: false
-        tags: {}
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
-    - stage:
-        name: dev
-        identifier: dev
-        template:
-          templateRef: Rolling_Deployment_Dev
-          versionLabel: 0.0.1
-          templateInputs:
-            type: Deployment
-            spec:
-              service:
-                serviceRef: nginx
-    - stage:
-        name: SAM Deploy
-        identifier: SAM_Deploy
-        description: ""
-        type: Deployment
-        spec:
-          deploymentType: CustomDeployment
-          customDeploymentRef:
-            templateRef: AWS_SAM
-            versionLabel: 0.0.1
-          execution:
-            steps:
-              - step:
-                  name: Fetch Instances
-                  identifier: fetchInstances
-                  type: FetchInstanceScript
-                  timeout: 10m
-                  spec: {}
-              - step:
-                  name: Deploy SAM
-                  identifier: Deploy_SAM
-                  template:
-                    templateRef: Deploy_SAM
-                    versionLabel: 0.0.1
-            rollbackSteps: []
-          service:
-            serviceRef: SAM_Function
-          environment:
-            environmentRef: L3
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: Deployment_Template
         tags: {}
         failureStrategies:
           - onFailure:

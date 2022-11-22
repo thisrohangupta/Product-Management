@@ -12,7 +12,13 @@ pipeline:
             spec:
               service:
                 serviceRef: nginxk8s
-                serviceInputs: <+input>
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: ng
   tags: {}
   projectIdentifier: Rohan
   orgIdentifier: default

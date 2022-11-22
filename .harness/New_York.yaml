@@ -11,7 +11,7 @@ pipeline:
             type: Deployment
             spec:
               service:
-                serviceRef: <+input>
+                serviceRef: nginxk8s
                 serviceInputs: <+input>
   tags: {}
   projectIdentifier: Rohan

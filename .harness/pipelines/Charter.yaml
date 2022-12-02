@@ -159,6 +159,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
                     - step:
                         type: ShellScript
                         name: Set_PostPrimary_Value
@@ -195,6 +199,10 @@ pipeline:
                           environmentVariables: []
                           outputVariables: []
                         timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
                     - step:
                         type: HarnessApproval
                         name: Delete Canary Approval
@@ -209,6 +217,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
                     - step:
                         type: ShellScript
                         name: Delete Canary
@@ -241,6 +253,10 @@ pipeline:
                           environmentVariables: []
                           outputVariables: []
                         timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
                     - step:
                         name: PostValidation
                         identifier: PostValidation

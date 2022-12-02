@@ -1,121 +1,106 @@
 pipeline:
-  name: Charter
-  identifier: Charter
-  projectIdentifier: Rohan
-  orgIdentifier: default
+  name: "Charter"
+  identifier: "Charter"
+  projectIdentifier: "Rohan"
+  orgIdentifier: "default"
   tags: {}
   stages:
-    - stage:
-        name: WIN-Release-Primary-validation
-        identifier: WINReleasePrimaryvalidation
-        description: ""
-        type: Deployment
-        spec:
-          deploymentType: NativeHelm
-          service:
-            serviceRef: <+input>
-            serviceInputs: <+input>
-          environment:
-            environmentRef: <+input>
-            deployToAll: false
-            environmentInputs: <+input>
-            infrastructureDefinitions: <+input>
-          execution:
-            steps:
-              - step:
-                  type: ShellScript
-                  name: Set_PrePrimary_Value
-                  identifier: Set_PrePrimary_Value
+  - stage:
+      name: "WIN-Release-Primary-validation"
+      identifier: "WINReleasePrimaryvalidation"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "NativeHelm"
+        service:
+          serviceRef: "<+input>"
+          serviceInputs: "<+input>"
+        environment:
+          environmentRef: "<+input>"
+          deployToAll: false
+          environmentInputs: "<+input>"
+          infrastructureDefinitions: "<+input>"
+        execution:
+          steps:
+          - step:
+              type: "ShellScript"
+              name: "Set_PrePrimary_Value"
+              identifier: "Set_PrePrimary_Value"
+              spec:
+                shell: "Bash"
+                onDelegate: true
+                source:
+                  type: "Inline"
                   spec:
-                    shell: Bash
-                    onDelegate: true
-                    source:
-                      type: Inline
-                      spec:
-                        script: |-
-                          PRIMARY_WEIGHT=""
-                          CANARY_WEIGHT=""
-                          CANARY_DEPLOY_MODE=""
-
-                          env=`echo ${infra.name} | sed -e "s/-canary//g"`
-
-                          enable_canary_deploy="false"
-
-                          if [[  (${workflow.variables.ENABLE_CANARY_INT} == "true" &&  $env == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "true" &&  $env == 'perf') || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "true" &&  $env == 'stage') || ( ${workflow.variables.ENABLE_CANARY_PROD} == "true" &&  $env == 'prod')  ]]; then
-
-                               enable_canary_deploy="true"
-                          fi
-
-                          if [[ $enable_canary_deploy == "true" ]]; then
-                             export PRIMARY_WEIGHT="0"
-                             export CANARY_WEIGHT="100"
-                             export CANARY_DEPLOY_MODE="true"
-                          else
-                             export PRIMARY_WEIGHT="100"
-                             export CANARY_WEIGHT="0"
-                             export CANARY_DEPLOY_MODE="false"
-                          fi
-
-                          #export PRIMARY_WEIGHT="100"
-                          #export CANARY_WEIGHT="0"
-
-                          echo "PRIMARY_WEIGHT Value"
-                          echo ${PRIMARY_WEIGHT}
-
-                          echo "CANARY_WEIGHT Value"
-                          echo ${CANARY_WEIGHT}
-
-                          echo "CANARY_DEPLOY_MODE Value"
-                          echo ${CANARY_DEPLOY_MODE}
-
-                          export INFRA_NAME=`echo ${infra.name} | sed -e "s/-canary//g"`
-
-                          echo "INFRA NAME"
-                          echo ${INFRA_NAME}
-                    environmentVariables: []
-                    outputVariables:
-                      - name: CANARY_WEIGHT
-                        type: String
-                        value: CANARY_WEIGHT
-                      - name: PRIMARY_WEIGHT
-                        type: String
-                        value: PRIMARY_WEIGHT
-                      - name: INFRA_NAME
-                        type: String
-                        value: INFRA_NAME
-                      - name: CANARY_DEPLOY_MODE
-                        type: String
-                        value: CANARY_DEPLOY_MODE
-                  timeout: 10m
-              - step:
-                  name: Fetch_EWS_Creds
-                  identifier: Fetch_EWS_Creds
-                  template:
-                    templateRef: Fetch_EWS_Creds
-              - step:
-                  name: "Publish Helm Chart Version "
-                  identifier: Publish_Helm_Chart_Version
-                  template:
-                    templateRef: Publish_Helm_Chart_Version
-                    versionLabel: "1.0"
-              - step:
-                  name: Helm Deployment
-                  identifier: helmDeployment
-                  type: HelmDeploy
-                  timeout: 10m
-                  spec:
-                    skipDryRun: false
-            rollbackSteps:
-              - step:
-                  name: Helm Rollback
-                  identifier: helmRollback
-                  type: HelmRollback
-                  timeout: 10m
-                  spec: {}
-        tags: {}
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
+                    script: "PRIMARY_WEIGHT=\"\"\nCANARY_WEIGHT=\"\"\nCANARY_DEPLOY_MODE=\"\
+                      \"\n\nenv=`echo ${infra.name} | sed -e \"s/-canary//g\"`\n\n\
+                      enable_canary_deploy=\"false\"\n\nif [[  (${workflow.variables.ENABLE_CANARY_INT}\
+                      \ == \"true\" &&  $env == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF}\
+                      \ == \"true\" &&  $env == 'perf') || ( ${workflow.variables.ENABLE_CANARY_STAGE}\
+                      \ == \"true\" &&  $env == 'stage') || ( ${workflow.variables.ENABLE_CANARY_PROD}\
+                      \ == \"true\" &&  $env == 'prod')  ]]; then\n\n     enable_canary_deploy=\"\
+                      true\"\nfi\n\nif [[ $enable_canary_deploy == \"true\" ]]; then\n\
+                      \   export PRIMARY_WEIGHT=\"0\"\n   export CANARY_WEIGHT=\"\
+                      100\"\n   export CANARY_DEPLOY_MODE=\"true\"\nelse\n   export\
+                      \ PRIMARY_WEIGHT=\"100\"\n   export CANARY_WEIGHT=\"0\"\n  \
+                      \ export CANARY_DEPLOY_MODE=\"false\"\nfi\n\n#export PRIMARY_WEIGHT=\"\
+                      100\"\n#export CANARY_WEIGHT=\"0\"\n\necho \"PRIMARY_WEIGHT\
+                      \ Value\"\necho ${PRIMARY_WEIGHT}\n\necho \"CANARY_WEIGHT Value\"\
+                      \necho ${CANARY_WEIGHT}\n\necho \"CANARY_DEPLOY_MODE Value\"\
+                      \necho ${CANARY_DEPLOY_MODE}\n\nexport INFRA_NAME=`echo ${infra.name}\
+                      \ | sed -e \"s/-canary//g\"`\n\necho \"INFRA NAME\"\necho ${INFRA_NAME}"
+                environmentVariables: []
+                outputVariables:
+                - name: "CANARY_WEIGHT"
+                  type: "String"
+                  value: "CANARY_WEIGHT"
+                - name: "PRIMARY_WEIGHT"
+                  type: "String"
+                  value: "PRIMARY_WEIGHT"
+                - name: "INFRA_NAME"
+                  type: "String"
+                  value: "INFRA_NAME"
+                - name: "CANARY_DEPLOY_MODE"
+                  type: "String"
+                  value: "CANARY_DEPLOY_MODE"
+              timeout: "10m"
+          - step:
+              name: "Fetch_EWS_Creds"
+              identifier: "Fetch_EWS_Creds"
+              template:
+                templateRef: "Fetch_EWS_Creds"
+                templateInputs:
+                  type: "ShellScript"
+                  when:
+                    condition: "<+input>"
+          - step:
+              name: "Publish Helm Chart Version "
+              identifier: "Publish_Helm_Chart_Version"
+              template:
+                templateRef: "Publish_Helm_Chart_Version"
+                versionLabel: "1.0"
+                templateInputs:
+                  type: "ShellScript"
+                  when:
+                    condition: "<+input>"
+          - step:
+              name: "Helm Deployment"
+              identifier: "helmDeployment"
+              type: "HelmDeploy"
+              timeout: "10m"
+              spec:
+                skipDryRun: false
+          rollbackSteps:
+          - step:
+              name: "Helm Rollback"
+              identifier: "helmRollback"
+              type: "HelmRollback"
+              timeout: "10m"
+              spec: {}
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"

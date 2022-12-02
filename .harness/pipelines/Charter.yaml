@@ -6,9 +6,6 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: WIN-Release-Primary-validation
-        identifier: WINReleasePrimaryvalidation
-        description: ""
         type: Deployment
         spec:
           deploymentType: NativeHelm
@@ -92,34 +89,162 @@ pipeline:
                               value: CANARY_DEPLOY_MODE
                         timeout: 10m
                     - step:
-                        name: Fetch_EWS_Creds
-                        identifier: Fetch_EWS_Creds
-                        template:
-                          templateRef: Fetch_EWS_Creds
-                          templateInputs:
-                            type: ShellScript
-                            when:
-                              condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
+                        type: ShellScript
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                if [  $env == 'int' ]; then
+                                EWS_USER1=${secrets.getValue("win-ews-int-user")}
+                                EWS_PWD1=${secrets.getValue("win-ews-int-password")}
+                                echo ${EWS_USER1}
+                                echo ${EWS_PWD1}
+                                else 
+                                if [  $env == 'perf' ]; then
+                                EWS_USER1=${secrets.getValue("win-ews-perf-user")}
+                                EWS_PWD1=${secrets.getValue("win-ews-perf-password")}
+                                echo ${EWS_USER1}
+                                echo ${EWS_PWD1}
+                                elif  [  $env == 'stage' ]; then
+                                EWS_USER1=${secrets.getValue("win-ews-stage-user")}
+                                EWS_PWD=${secrets.getValue("win-ews-stage-password")}
+                                echo ${EWS_USER1}
+                                echo ${EWS_PWD1}
+
+                                elif  [  $env == 'prod' ]; then 
+                                EWS_USER1=${secrets.getValue("win-ews-prod-user")}
+                                EWS_PWD1=${secrets.getValue("win-ews-prod-password")}
+                                echo ${EWS_USER1}
+                                echo ${EWS_PWD1}
+                                fi 
+                                fi 
+
+                                export  EWS_USER=${EWS_USER1}
+                                export  EWS_PWD=${EWS_PWD1}
+                          environmentVariables: []
+                          outputVariables:
+                            - name: EWS_USER
+                              type: Secret
+                              value: EWS_USER
+                            - name: EWS_PWD
+                              type: Secret
+                              value: EWS_PWD
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: <+input>
+                        name: Fetch EWS
+                        identifier: Fetch_EWS
                     - step:
-                        name: "Publish Helm Chart Version "
-                        identifier: Publish_Helm_Chart_Version
-                        template:
-                          templateRef: Publish_Helm_Chart_Version
-                          versionLabel: "1.0"
-                          templateInputs:
-                            type: ShellScript
-                            when:
-                              condition: ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
+                        type: ShellScript
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                VERSION=""
+                                RELEASE_VERSION=""
+                                gitURL=https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scp/${workflow.variables.SUB_GROUP}/${workflow.variables.PROJECT}/${workflow.variables.GIT_REPO}.git
+
+                                if [ -z "${workflow.variables.CHART_VERSION}" ] && [ -z "${workflow.variables.GIT_BRANCH_NAME}" ]; then
+                                   echo "Please specify either a chart version or branch name"
+                                exit 1
+                                fi  
+
+                                if [ -z "${workflow.variables.CHART_VERSION}" ]; then
+                                   branchExists=$(git ls-remote --heads $gitURL  | wc -l)
+                                  if [ "${branchExists}" = "0" ]; then
+                                    echo "Could not find branch ${workflow.variables.GIT_BRANCH_NAME} please specify a branch that exists"
+                                    exit 1
+                                  fi
+                                  rm -rf ${workflow.variables.GIT_REPO}
+
+                                  git clone --single-branch --branch ${workflow.variables.GIT_BRANCH_NAME} $gitURL
+
+                                  apt-get install -y software-properties-common
+                                  add-apt-repository -y ppa:rmescandon/yq
+                                  apt-get install -y yq
+
+                                  cd ${workflow.variables.GIT_REPO}
+                                  
+                                  # CHART_VERSION=$(yq r Chart.yaml version)
+                                  #test=$(yq r Chart.yaml version)
+                                  #VERSION=$(yq r Chart.yaml version)
+                                  test=$(yq e '.version' Chart.yaml )
+                                  VERSION=$(yq e '.version' Chart.yaml )
+                                else
+                                  VERSION=${workflow.variables.CHART_VERSION}
+                                fi
+
+
+
+                                if [ -z "$VERSION" ]; then
+                                  echo "Did not find a chart version please review if this is the correct release branch ${workflow.variables.GIT_BRANCH_NAME} or specify chart version"
+                                  exit 1
+                                fi
+
+                                export CHART_VERSION=${VERSION}
+                                export RELEASE_VERSION=$(echo ${VERSION} | cut -f1,2 -d.)
+                                echo "Chart Version"
+                                echo ${VERSION}
+                                echo "Release Version"
+                                echo $RELEASE_VERSION
+                          environmentVariables: []
+                          outputVariables:
+                            - name: CHART_VERSION
+                              type: String
+                              value: CHART_VERSION
+                            - name: RELEASE_VERSION
+                              type: String
+                              value: RELEASE_VERSION
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: <+input>
+                        name: Publish Helm Chart
+                        identifier: Publish_Helm_Chart
                     - step:
-                        name: Pre Validation
-                        identifier: Pre_Validation
-                        template:
-                          templateRef: Pre_validation
-                          versionLabel: "1.0"
-                          templateInputs:
-                            type: ShellScript
-                            when:
-                              condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
+                        timeout: 10m
+                        type: ShellScript
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |
+                                aname=` echo "${workflow.variables.GIT_REPO}" |   cut -d- -f1` 
+
+                                nam=$aname
+
+                                check=`helm list -n $nam | grep -i deployed | awk '{print $9}' |  cut -d- -f4 `
+                                echo $check
+
+                                echo ${workflow.variables.previous_chart_version}
+
+
+                                if [[   $check == ${workflow.variables.previous_chart_version} ]]; then
+                                    echo "version matched"
+                                else
+                                    echo "version Mismatched"
+                                fi
+                                podcount=`kubectl get pod -n $nam  |  grep -v -i name | grep -v -i completed | grep -v 2/2 | wc -l`
+
+                                if [[ $podcount == "0" ]]; then
+                                    echo "all pods are up and running"
+                                fi
+                          environmentVariables: []
+                          outputVariables: []
+                        when:
+                          stageStatus: Success
+                          condition: <+input>
+                        name: Pre Valid
+                        identifier: Pre_Valid
                     - step:
                         type: HarnessApproval
                         name: Pre Approval
@@ -258,11 +383,21 @@ pipeline:
                           condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
                         failureStrategies: []
                     - step:
-                        name: PostValidation
-                        identifier: PostValidation
-                        template:
-                          templateRef: Post_Validation
-                          versionLabel: "1.0"
+                        type: ShellScript
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: "aname=` echo \"${workflow.variables.GIT_REPO}\" |   cut -d- -f1` \n\nnam=$aname\necho $nam \nvslist=$(kubectl get vs -n ${nam} | sed  '1d' | awk {'print $1'})\n\nfor vs in $vslist\ndo \n       echo ${vs}\n\n       canaryhostcount=$(kubectl get vs ${vs} -n ${nam} -o json | jq -r '.spec.http[].route[].destination.host'|grep -i -e \"-canary.\"| wc -l)\n       \n\n       if [[ $canaryhostcount -gt 0 ]]; then\n              echo \"$vs  is a Canary Virtual Service\"\n              #Make sure first hostname does not contain canary\n                hostcount=0\n                #totalcount=0\n              \trwcount=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http' | jq length )\n                #echo $rwcount\n              \tfor (( rw=0; rw<$rwcount; rw++ ))\n\t\t\t\tdo\n\t\t\t\t         testhostname=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http['$rw'].route['$rw'].destination.host')\n\t\t\t\t         echo $testhostname\n\t\t\t\t         if [[  \"$testhostname\" != *\"canary\"* ]]; then\n\t\t\t\t              weight=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http['$rw'].route['$rw'].weight')\n\t\t\t\t                if [[ $weight == \"100\" ]]; then\n                                                    echo \"Primary weight matched\"\n                                                else\n                                                     echo \" Weight mismatched for this service ${vs}\"\n                                                     exit\n                                                 fi\n\t\t\t\t         fi\n\t\t\t\tdone\n\n       else\n       \t\techo \"******** $vs  is not a Canary enabled Virtual Service **********\"\n       fi\n\ndone\n\n\ncheck=`helm list -n $nam | grep -i deployed | awk '{print $9}' |  cut -d- -f4 `\necho $check\n\necho ${context.chart.CHART_VERSION} \n\n\n#if [[   $check == ${context.chart.CHART_VERSION}  ]]; then\n#    echo \"version matched\"\n#fi"
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                        name: Post Validate
+                        identifier: Post_Validate
                     - step:
                         type: HarnessApproval
                         name: Post Approval
@@ -282,11 +417,69 @@ pipeline:
                           condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
                         failureStrategies: []
                     - step:
-                        name: "Notify Deployment "
-                        identifier: Notify_Deployment
-                        template:
-                          templateRef: Notify_Deployment
-                          versionLabel: "1.0"
+                        type: ShellScript
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                #!/bin/bash
+                                rm -rf utils
+                                git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/cicd/utils.git'
+
+                                cd utils/webex
+
+                                trigger_message() {
+                                  python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN}" -w "${secrets.getValue("webexBotToken")}"
+                                }
+
+                                # variableint="${published_name_int.approvedBy.name}"
+                                # variableperf="${published_name_perf.approvedBy.name}"
+                                # variablestage="${published_name_stage.approvedBy.name}"
+                                # variableprod="${published_name_prod.approvedBy.name}"
+
+
+                                env_int="${published_name_int.approvedBy.name}"
+                                env_perf="${published_name_perf.approvedBy.name}"
+                                env_stage="${published_name_stage.approvedBy.name}"
+                                env_prod="${published_name_prod.approvedBy.name}"
+
+
+                                if [ -n "${env_int}" ] && [ "${context.canary.INFRA_NAME}" == "int" ]; then
+                                  python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_INT}" -w "${secrets.getValue("webexBotToken")}"
+                                  elif [ -n "${env_perf}" ] && [ "${context.canary.INFRA_NAME}" == "perf" ]; then
+                                      python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PERF}" -w "${secrets.getValue("webexBotToken")}"
+                                  elif [ -n "${env_stage}" ] && [ "${context.canary.INFRA_NAME}" == "stage" ]; then
+                                      python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_STAGE}" -w "${secrets.getValue("webexBotToken")}"
+                                  elif [ -n "${env_prod}" ] && [ "${context.canary.INFRA_NAME}" == "prod" ]; then
+                                      python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PROD}" -w "${secrets.getValue("webexBotToken")}"
+                                else
+                                  if [[ -z "${published_name_int}" ]]; then
+                                    echo "*****************"
+                                    trigger_message
+                                    echo "*****************"
+
+                                  elif [[ -z "${published_name_perf}" ]]; then
+                                    echo "*****************"
+                                    trigger_message
+                                    echo "*****************"
+                                  elif [[ -z "${published_name_stage}" ]]; then
+                                    echo "*****************"
+                                    trigger_message
+                                    echo "*****************"
+                                  elif [[ -z "${published_name_prod}" ]]; then
+                                    echo "*****************"
+                                    trigger_message
+                                    echo "*****************"
+                                 fi
+                                fi
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        name: Notify Deploy
+                        identifier: Notify_Deploy
                     - step:
                         type: ShellScript
                         name: Trigger TechMobile Testing
@@ -525,12 +718,65 @@ pipeline:
                   timeout: 10m
                   spec: {}
               - step:
+                  type: ShellScript
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+
+                          #!/bin/bash
+                          rm -rf utils
+                          git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/cicd/utils.git'
+
+                          cd utils/webex
+
+                          trigger_message() {
+                            python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+                          }
+
+
+                          env_int="${published_name_int.approvedBy.name}"
+                          env_perf="${published_name_perf.approvedBy.name}"
+                          env_stage="${published_name_stage.approvedBy.name}"
+                          env_prod="${published_name_prod.approvedBy.name}"
+
+                                                                                  
+                          if [ -n "${env_int}" ] && [ "${context.canary.INFRA_NAME}" == "integration" ]; then
+                            python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_INT_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+                            elif [ -n "${env_perf}" ] && [ "${context.canary.INFRA_NAME}" == "perf" ]; then
+                                python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PERF_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+                            elif [ -n "${env_stage}" ] && [ "${context.canary.INFRA_NAME}" == "stage" ]; then
+                                python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_STAGE_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+                            elif [ -n "${env_prod}" ] && [ "${context.canary.INFRA_NAME}" == "prod" ]; then
+                                python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PROD_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+                          else
+                            if [[ -z "${published_name_int}" ]]; then
+                              echo "*****************"
+                              trigger_message
+                              echo "*****************"
+
+                            elif [[ -z "${published_name_perf}" ]]; then
+                              echo "*****************"
+                              trigger_message
+                              echo "*****************"
+                            elif [[ -z "${published_name_stage}" ]]; then
+                              echo "*****************"
+                              trigger_message
+                              echo "*****************"
+                            elif [[ -z "${published_name_prod}" ]]; then
+                              echo "*****************"
+                              trigger_message
+                              echo "*****************"
+                           fi
+                          fi
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
                   name: Notify Rollback
                   identifier: Notify_Rollback
-                  template:
-                    templateRef: Notify_Rollback
-                    versionLabel: "1.0"
-        tags: {}
         failureStrategies:
           - onFailure:
               errors:
@@ -610,3 +856,6 @@ pipeline:
             type: String
             description: ""
             value: <+input>
+        name: Deploy
+        identifier: Deploy
+        tags: {}

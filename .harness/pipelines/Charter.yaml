@@ -109,7 +109,17 @@ pipeline:
                           templateInputs:
                             type: ShellScript
                             when:
-                              condition: <+input>
+                              condition: ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
+                    - step:
+                        name: Pre Validation
+                        identifier: Pre_Validation
+                        template:
+                          templateRef: Pre_validation
+                          versionLabel: "1.0"
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
                     - step:
                         type: HarnessApproval
                         name: Pre Approval
@@ -424,6 +434,10 @@ pipeline:
                           environmentVariables: []
                           outputVariables: []
                         timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: "\"true\" == \"true\""
+                        failureStrategies: []
               - stepGroup:
                   name: Wrap Up
                   identifier: Wrap_Up

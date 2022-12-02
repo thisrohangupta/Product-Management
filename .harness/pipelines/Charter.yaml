@@ -136,6 +136,7 @@ pipeline:
                         timeout: 1d
                         when:
                           stageStatus: Success
+                          condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
                         failureStrategies: []
                     - step:
                         name: Helm Deployment

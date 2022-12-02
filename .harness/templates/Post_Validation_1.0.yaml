@@ -15,5 +15,7 @@ template:
       environmentVariables: []
       outputVariables: []
     timeout: 10m
+    when:
+      stageStatus: Success
   identifier: Post_Validation
   versionLabel: "1.0"

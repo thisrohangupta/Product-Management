@@ -68,5 +68,7 @@ template:
           type: String
           value: RELEASE_VERSION
     timeout: 10m
+    when:
+      stageStatus: Success
   identifier: Publish_Helm_Chart_Version
   versionLabel: "1.0"

@@ -40,3 +40,4 @@ template:
       outputVariables: []
     when:
       stageStatus: Success
+      condition: <+input>

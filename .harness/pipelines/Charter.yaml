@@ -256,6 +256,166 @@ pipeline:
                         template:
                           templateRef: Notify_Deployment
                           versionLabel: "1.0"
+                    - step:
+                        type: ShellScript
+                        name: Trigger TechMobile Testing
+                        identifier: Trigger_TechMobile_Testing
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                rm -rf win-testing
+
+                                git clone https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scpautomation/win-testing.git
+
+                                declare -A accounts=(
+                                  ["int"]=${secrets.getValue("win_account_int")} 
+                                  ["perf"]=${secrets.getValue("win_account_perf")}
+                                  ["prod"]=${secrets.getValue("win_account_prod")}
+                                )
+
+                                declare -A usernames=(
+                                  ["int"]=${secrets.getValue("techmobile_user")}
+                                  ["perf"]=${secrets.getValue("techmobile_user_perf")}
+                                  ["prod"]=${secrets.getValue("techmobile_user_prod")}
+                                )
+
+                                declare -A passwords=(
+                                  ["int"]=${secrets.getValue("techmobile_password")} 
+                                  ["perf"]=${secrets.getValue("techmobile_password_perf")}
+                                  ["prod"]=${secrets.getValue("techmobile_password_prod")}
+                                )
+
+                                cd win-testing
+
+                                pip3 install selenium
+                                pip3 install requests
+
+                                xvfb-run python3 win_techmobile.py --env ${infra.name} \
+                                --tech_mobile_creds ${usernames["${infra.name}"]} ${passwords["${infra.name}"]} \
+                                --win_server_account ${accounts["${infra.name}"]}
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                    - step:
+                        type: ShellScript
+                        name: Trigger Performance Testing
+                        identifier: Trigger_Performance_Testing
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                API_TOKEN=${secrets.getValue("jenkins_jmeter_api")}
+                                JENKINS_USERNAME=${secrets.getValue("jenkins_jmeter_username")}
+
+                                AWS_KEY=${secrets.getValue("scpFirmwareBatchUpgradeHarnessUser_key")}
+                                AWS_SECRET=${secrets.getValue("scpFirmwareBatchUpgradeHarnessUser_secret")}
+
+                                #rm -rf shared-components
+
+                                #git clone --single-branch --branch master 'https://harness_user:${secrets.getValue("git_harness_user_password")}@stash.dev-charter.net/stash/scm/pip/shared-components.git'
+
+                                #cd shared-components/jmeter
+
+                                rm -rf utils
+
+                                git clone --single-branch --branch master 'https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scpautomation/cicd/utils.git'
+
+                                cd utils/jmeter
+
+                                pip3 install -r requirements.txt
+
+                                component=""
+
+                                #if [ "${service.name}" = "win-ui" ];then
+                                #  component="ui"
+                                #else
+                                #  component="server"
+                                #fi
+
+                                component="ui"
+
+                                STATUS="$(python3 jmeter.py -k "${AWS_KEY}" \
+                                -s "${AWS_SECRET}" \
+                                -r "${workflow.variables.AWS_ROLE}" \
+                                -n "win" \
+                                -c "${component}" \
+                                -e "${infra.name}" \
+                                -u "${JENKINS_USERNAME}" \
+                                -a "${API_TOKEN}")"
+
+                                echo $STATUS
+
+                                sleep 10s 
+                                #component="server"
+
+                                #STATUS="$(python3 jmeter.py -k "${AWS_KEY}" \
+                                #-s "${AWS_SECRET}" \
+                                #-r "${workflow.variables.AWS_ROLE}" \
+                                #-n "win" \
+                                #-c "${component}" \
+                                #-e "${infra.name}" \
+                                #-u "${JENKINS_USERNAME}" \
+                                #-a "${API_TOKEN}")"
+
+                                #echo $STATUS
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                    - step:
+                        type: ShellScript
+                        name: Trigger Robot Tests
+                        identifier: Trigger_Robot_Tests
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                pip3 install requests
+                                pip3 install redis
+
+                                python3 -c '
+
+                                import requests
+                                import json
+                                import redis
+
+                                conn = redis.Redis(host="scp-robot-automation.i9tdcv.ng.0001.use1.cache.amazonaws.com", port=6379, db=0, decode_responses=True) 
+
+                                conn.set("deployments:${service.name}:${infra.name}:version", "${context.chart.CHART_VERSION}")
+                                tags = conn.smembers("tags:win")
+
+                                url = "https://app.harness.io/gateway/api/webhooks/Sg2917dEy2T9WSqJjfRkD3v2MNkfpBx9VbR528jE?accountId=vQWExnj-Sy2pmVJ8zr1MnQ"
+
+                                data = {
+                                       "application": "skQiHPfjS067eEVNmLu1-A",
+                                       "parameters": {
+                                                     "ROBOT_TAGS": " ".join(tags),
+                                                     "ROBOT_TEST_FILE": "winui",
+                                                     "EMAILS": "DL-SCP-INT-TEST@charter.com DL-SCP-AUTOMATION@charter.com zach.smialek@charter.com jeffrey.swanson@charter.com",
+                                                     "FAILURE_PERCENTAGE": "20",
+                                                     "ENV": "${infra.name}",
+                                                     "ROUTER_MODEL": None
+                                                     }
+                                       }
+
+                                headers = { "Content-Type": "application/json"}
+                                r = requests.request(method="POST", url=url, data=json.dumps(data), headers=headers)
+
+                                if not r.ok:
+                                    print("something went wrong starting scl tests", r.text, r.status_code)
+                                '
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
               - stepGroup:
                   name: Wrap Up
                   identifier: Wrap_Up

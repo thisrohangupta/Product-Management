@@ -48,5 +48,7 @@ template:
           type: Secret
           value: EWS_PWD
     timeout: 10m
+    when:
+      stageStatus: Success
   identifier: Fetch_EWS_Creds
   versionLabel: 1.0.0

@@ -50,5 +50,6 @@ template:
     timeout: 10m
     when:
       stageStatus: Success
+      condition: <+input>
   identifier: Fetch_EWS_Creds
   versionLabel: "1.2"

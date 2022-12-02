@@ -70,5 +70,6 @@ template:
     timeout: 10m
     when:
       stageStatus: Success
+      condition: <+input>
   identifier: Publish_Helm_Chart_Version
   versionLabel: "1.0"

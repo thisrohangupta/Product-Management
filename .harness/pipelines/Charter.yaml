@@ -300,6 +300,10 @@ pipeline:
                           environmentVariables: []
                           outputVariables: []
                         timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: "\"true\" == \"true\""
+                        failureStrategies: []
                     - step:
                         type: ShellScript
                         name: Trigger Performance Testing
@@ -368,6 +372,10 @@ pipeline:
                           environmentVariables: []
                           outputVariables: []
                         timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: <+env.name> == "prod"
+                        failureStrategies: []
                     - step:
                         type: ShellScript
                         name: Trigger Robot Tests

@@ -99,7 +99,7 @@ pipeline:
                           templateInputs:
                             type: ShellScript
                             when:
-                              condition: <+input>
+                              condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
                     - step:
                         name: "Publish Helm Chart Version "
                         identifier: Publish_Helm_Chart_Version

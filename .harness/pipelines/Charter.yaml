@@ -531,3 +531,76 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+        variables:
+          - name: CHART_VERSION
+            type: String
+            description: ""
+            value: <+input>
+          - name: DEPLOYMENT_NOTIFICATION_EMAILS
+            type: String
+            description: ""
+            value: <+input>
+          - name: PROJECT
+            type: String
+            description: ""
+            value: win
+          - name: GIT_BRANCH_NAME
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENV
+            type: String
+            description: ""
+            value: <+input>
+          - name: RELEASE_VERSION
+            type: String
+            description: ""
+            value: arn:aws:iam::750300312428:role/scpFirmwareBatchUpgradeHarness
+          - name: AWS_ROLE
+            type: String
+            description: ""
+            value: <+input>
+          - name: CANARY_NAMESPACE
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_INT
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_PERF
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_STAGE
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_PROD
+            type: String
+            description: ""
+            value: <+input>
+          - name: CLUSTER_TAG
+            type: String
+            description: ""
+            value: <+input>
+          - name: K8S_CLUSTER_ID
+            type: String
+            description: ""
+            value: <+input>
+          - name: GIT_REPO
+            type: String
+            description: ""
+            value: win-helm-chart
+          - name: SUB_GROUP
+            type: String
+            description: ""
+            value: scp-services
+          - name: REPOSITORY_NAME
+            type: String
+            description: ""
+            value: win-helm-chart
+          - name: previous_chart_version
+            type: String
+            description: ""
+            value: <+input>

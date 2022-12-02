@@ -477,6 +477,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${infra.name} != "int"
+                        failureStrategies: []
                     - step:
                         type: HarnessApproval
                         name: Approval for perf
@@ -491,6 +495,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${infra.name} != "perf"
+                        failureStrategies: []
                     - step:
                         type: HarnessApproval
                         name: Approval for Stage or Prod
@@ -505,6 +513,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${env.name} != "prod"
+                        failureStrategies: []
             rollbackSteps:
               - step:
                   name: Helm Rollback

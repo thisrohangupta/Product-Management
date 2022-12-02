@@ -42,10 +42,10 @@ pipeline:
                 value: <+input>
               - name: GIT_BRANCH_NAME
                 type: String
-                value: <+input>
+                value: <+serviceVariable.branch>
               - name: ENV
                 type: String
-                value: <+input>
+                value: <+env.name>
               - name: AWS_ROLE
                 type: String
                 value: <+input>

@@ -194,6 +194,38 @@ pipeline:
                       disallowPipelineExecutor: false
                     approverInputs: []
                   timeout: 1d
+              - step:
+                  type: ShellScript
+                  name: Delete Canary
+                  identifier: Delete_Canary
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
+                          if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
+                            echo "Not running in intended delegate of $CLUSTER_NAME"
+                            exit 1
+                          fi
+
+
+                          namespace=${workflow.variables.CANARY_NAMESPACE}
+
+                          rm -rf canary-scripts
+
+
+
+                          git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
+
+                          cd canary-scripts
+
+                          ./delete_canary_deploy.sh "$namespace" 
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
             rollbackSteps:
               - step:
                   name: Helm Rollback

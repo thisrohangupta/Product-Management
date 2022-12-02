@@ -92,7 +92,6 @@ pipeline:
                   identifier: Fetch_EWS_Creds
                   template:
                     templateRef: Fetch_EWS_Creds
-                    versionLabel: 1.0.0
               - step:
                   name: Helm Deployment
                   identifier: helmDeployment

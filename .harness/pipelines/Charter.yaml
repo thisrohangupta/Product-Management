@@ -226,6 +226,32 @@ pipeline:
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
+              - step:
+                  name: PostValidation
+                  identifier: PostValidation
+                  template:
+                    templateRef: Post_Validation
+                    versionLabel: "1.0"
+              - step:
+                  type: HarnessApproval
+                  name: Post Approval
+                  identifier: Post_Approval
+                  spec:
+                    approvalMessage: Please review the following information and approve the pipeline progression
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      userGroups:
+                        - account._account_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                    approverInputs: []
+                  timeout: 1d
+              - step:
+                  name: "Notify Deployment "
+                  identifier: Notify_Deployment
+                  template:
+                    templateRef: Notify_Deployment
+                    versionLabel: "1.0"
             rollbackSteps:
               - step:
                   name: Helm Rollback

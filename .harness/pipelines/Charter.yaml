@@ -22,236 +22,286 @@ pipeline:
             infrastructureDefinitions: <+input>
           execution:
             steps:
-              - step:
-                  type: ShellScript
-                  name: Set_PrePrimary_Value
-                  identifier: Set_PrePrimary_Value
-                  spec:
-                    shell: Bash
-                    onDelegate: true
-                    source:
-                      type: Inline
-                      spec:
-                        script: |-
-                          PRIMARY_WEIGHT=""
-                          CANARY_WEIGHT=""
-                          CANARY_DEPLOY_MODE=""
+              - stepGroup:
+                  name: Deploy Containers
+                  identifier: Deploy_Containers
+                  steps:
+                    - step:
+                        type: ShellScript
+                        name: Set_PrePrimary_Value
+                        identifier: Set_PrePrimary_Value
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                PRIMARY_WEIGHT=""
+                                CANARY_WEIGHT=""
+                                CANARY_DEPLOY_MODE=""
 
-                          env=`echo ${infra.name} | sed -e "s/-canary//g"`
+                                env=`echo ${infra.name} | sed -e "s/-canary//g"`
 
-                          enable_canary_deploy="false"
+                                enable_canary_deploy="false"
 
-                          if [[  (${workflow.variables.ENABLE_CANARY_INT} == "true" &&  $env == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "true" &&  $env == 'perf') || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "true" &&  $env == 'stage') || ( ${workflow.variables.ENABLE_CANARY_PROD} == "true" &&  $env == 'prod')  ]]; then
+                                if [[  (${workflow.variables.ENABLE_CANARY_INT} == "true" &&  $env == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "true" &&  $env == 'perf') || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "true" &&  $env == 'stage') || ( ${workflow.variables.ENABLE_CANARY_PROD} == "true" &&  $env == 'prod')  ]]; then
 
-                               enable_canary_deploy="true"
-                          fi
+                                     enable_canary_deploy="true"
+                                fi
 
-                          if [[ $enable_canary_deploy == "true" ]]; then
-                             export PRIMARY_WEIGHT="0"
-                             export CANARY_WEIGHT="100"
-                             export CANARY_DEPLOY_MODE="true"
-                          else
-                             export PRIMARY_WEIGHT="100"
-                             export CANARY_WEIGHT="0"
-                             export CANARY_DEPLOY_MODE="false"
-                          fi
+                                if [[ $enable_canary_deploy == "true" ]]; then
+                                   export PRIMARY_WEIGHT="0"
+                                   export CANARY_WEIGHT="100"
+                                   export CANARY_DEPLOY_MODE="true"
+                                else
+                                   export PRIMARY_WEIGHT="100"
+                                   export CANARY_WEIGHT="0"
+                                   export CANARY_DEPLOY_MODE="false"
+                                fi
 
-                          #export PRIMARY_WEIGHT="100"
-                          #export CANARY_WEIGHT="0"
+                                #export PRIMARY_WEIGHT="100"
+                                #export CANARY_WEIGHT="0"
 
-                          echo "PRIMARY_WEIGHT Value"
-                          echo ${PRIMARY_WEIGHT}
+                                echo "PRIMARY_WEIGHT Value"
+                                echo ${PRIMARY_WEIGHT}
 
-                          echo "CANARY_WEIGHT Value"
-                          echo ${CANARY_WEIGHT}
+                                echo "CANARY_WEIGHT Value"
+                                echo ${CANARY_WEIGHT}
 
-                          echo "CANARY_DEPLOY_MODE Value"
-                          echo ${CANARY_DEPLOY_MODE}
+                                echo "CANARY_DEPLOY_MODE Value"
+                                echo ${CANARY_DEPLOY_MODE}
 
-                          export INFRA_NAME=`echo ${infra.name} | sed -e "s/-canary//g"`
+                                export INFRA_NAME=`echo ${infra.name} | sed -e "s/-canary//g"`
 
-                          echo "INFRA NAME"
-                          echo ${INFRA_NAME}
-                    environmentVariables: []
-                    outputVariables:
-                      - name: CANARY_WEIGHT
-                        type: String
-                        value: CANARY_WEIGHT
-                      - name: PRIMARY_WEIGHT
-                        type: String
-                        value: PRIMARY_WEIGHT
-                      - name: INFRA_NAME
-                        type: String
-                        value: INFRA_NAME
-                      - name: CANARY_DEPLOY_MODE
-                        type: String
-                        value: CANARY_DEPLOY_MODE
-                  timeout: 10m
-              - step:
-                  name: Fetch_EWS_Creds
-                  identifier: Fetch_EWS_Creds
-                  template:
-                    templateRef: Fetch_EWS_Creds
-                    templateInputs:
-                      type: ShellScript
-                      when:
-                        condition: <+input>
-              - step:
-                  name: "Publish Helm Chart Version "
-                  identifier: Publish_Helm_Chart_Version
-                  template:
-                    templateRef: Publish_Helm_Chart_Version
-                    versionLabel: "1.0"
-                    templateInputs:
-                      type: ShellScript
-                      when:
-                        condition: <+input>
-              - step:
-                  type: HarnessApproval
-                  name: Pre Approval
-                  identifier: Pre_Approval
-                  spec:
-                    approvalMessage: Please review the following information and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      userGroups:
-                        - account._account_all_users
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                    approverInputs: []
-                  timeout: 1d
-                  when:
-                    stageStatus: Success
-                  failureStrategies: []
-              - step:
-                  name: Helm Deployment
-                  identifier: helmDeployment
-                  type: HelmDeploy
-                  timeout: 10m
-                  spec:
-                    skipDryRun: false
-              - step:
-                  type: HarnessApproval
-                  name: Approval for traffic change
-                  identifier: Approval_for_traffic_change
-                  spec:
-                    approvalMessage: Please review the following information and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      userGroups:
-                        - account._account_all_users
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                    approverInputs: []
-                  timeout: 1d
-              - step:
-                  type: ShellScript
-                  name: Set_PostPrimary_Value
-                  identifier: Set_PostPrimary_Value
-                  spec:
-                    shell: Bash
-                    onDelegate: true
-                    source:
-                      type: Inline
-                      spec:
-                        script: |-
-                          KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
-                          if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
-                            echo "Not running in intended delegate of $CLUSTER_NAME"
-                            exit 1
-                          fi
-
-
-                          namespace=${workflow.variables.CANARY_NAMESPACE}
-
-                          primaryweight=100
-                          canaryweight=0
+                                echo "INFRA NAME"
+                                echo ${INFRA_NAME}
+                          environmentVariables: []
+                          outputVariables:
+                            - name: CANARY_WEIGHT
+                              type: String
+                              value: CANARY_WEIGHT
+                            - name: PRIMARY_WEIGHT
+                              type: String
+                              value: PRIMARY_WEIGHT
+                            - name: INFRA_NAME
+                              type: String
+                              value: INFRA_NAME
+                            - name: CANARY_DEPLOY_MODE
+                              type: String
+                              value: CANARY_DEPLOY_MODE
+                        timeout: 10m
+                    - step:
+                        name: Fetch_EWS_Creds
+                        identifier: Fetch_EWS_Creds
+                        template:
+                          templateRef: Fetch_EWS_Creds
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: <+input>
+                    - step:
+                        name: "Publish Helm Chart Version "
+                        identifier: Publish_Helm_Chart_Version
+                        template:
+                          templateRef: Publish_Helm_Chart_Version
+                          versionLabel: "1.0"
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: <+input>
+                    - step:
+                        type: HarnessApproval
+                        name: Pre Approval
+                        identifier: Pre_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                        failureStrategies: []
+                    - step:
+                        name: Helm Deployment
+                        identifier: helmDeployment
+                        type: HelmDeploy
+                        timeout: 10m
+                        spec:
+                          skipDryRun: false
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for traffic change
+                        identifier: Approval_for_traffic_change
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                    - step:
+                        type: ShellScript
+                        name: Set_PostPrimary_Value
+                        identifier: Set_PostPrimary_Value
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
+                                if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
+                                  echo "Not running in intended delegate of $CLUSTER_NAME"
+                                  exit 1
+                                fi
 
 
-                          rm -rf canary-scripts
+                                namespace=${workflow.variables.CANARY_NAMESPACE}
 
-                          #git clone --single-branch --branch master 'https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scp/scpdevops/k8s-infrastructure/canary-scripts.git'
-
-                          git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
-
-                          cd canary-scripts
-
-                          ./split_traffic.sh "$namespace" $primaryweight $canaryweight
-                    environmentVariables: []
-                    outputVariables: []
-                  timeout: 10m
-              - step:
-                  type: HarnessApproval
-                  name: Delete Canary Approval
-                  identifier: Delete_Canary_Approval
-                  spec:
-                    approvalMessage: Please review the following information and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      userGroups:
-                        - account._account_all_users
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                    approverInputs: []
-                  timeout: 1d
-              - step:
-                  type: ShellScript
-                  name: Delete Canary
-                  identifier: Delete_Canary
-                  spec:
-                    shell: Bash
-                    onDelegate: true
-                    source:
-                      type: Inline
-                      spec:
-                        script: |-
-                          KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
-                          if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
-                            echo "Not running in intended delegate of $CLUSTER_NAME"
-                            exit 1
-                          fi
+                                primaryweight=100
+                                canaryweight=0
 
 
-                          namespace=${workflow.variables.CANARY_NAMESPACE}
+                                rm -rf canary-scripts
 
-                          rm -rf canary-scripts
+                                #git clone --single-branch --branch master 'https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scp/scpdevops/k8s-infrastructure/canary-scripts.git'
+
+                                git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
+
+                                cd canary-scripts
+
+                                ./split_traffic.sh "$namespace" $primaryweight $canaryweight
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                    - step:
+                        type: HarnessApproval
+                        name: Delete Canary Approval
+                        identifier: Delete_Canary_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                    - step:
+                        type: ShellScript
+                        name: Delete Canary
+                        identifier: Delete_Canary
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
+                                if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
+                                  echo "Not running in intended delegate of $CLUSTER_NAME"
+                                  exit 1
+                                fi
+
+
+                                namespace=${workflow.variables.CANARY_NAMESPACE}
+
+                                rm -rf canary-scripts
 
 
 
-                          git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
+                                git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
 
-                          cd canary-scripts
+                                cd canary-scripts
 
-                          ./delete_canary_deploy.sh "$namespace" 
-                    environmentVariables: []
-                    outputVariables: []
-                  timeout: 10m
-              - step:
-                  name: PostValidation
-                  identifier: PostValidation
-                  template:
-                    templateRef: Post_Validation
-                    versionLabel: "1.0"
-              - step:
-                  type: HarnessApproval
-                  name: Post Approval
-                  identifier: Post_Approval
-                  spec:
-                    approvalMessage: Please review the following information and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      userGroups:
-                        - account._account_all_users
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                    approverInputs: []
-                  timeout: 1d
-              - step:
-                  name: "Notify Deployment "
-                  identifier: Notify_Deployment
-                  template:
-                    templateRef: Notify_Deployment
-                    versionLabel: "1.0"
+                                ./delete_canary_deploy.sh "$namespace" 
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                    - step:
+                        name: PostValidation
+                        identifier: PostValidation
+                        template:
+                          templateRef: Post_Validation
+                          versionLabel: "1.0"
+                    - step:
+                        type: HarnessApproval
+                        name: Post Approval
+                        identifier: Post_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                    - step:
+                        name: "Notify Deployment "
+                        identifier: Notify_Deployment
+                        template:
+                          templateRef: Notify_Deployment
+                          versionLabel: "1.0"
+              - stepGroup:
+                  name: Wrap Up
+                  identifier: Wrap_Up
+                  steps:
+                    - step:
+                        type: HarnessApproval
+                        name: Approved for INT
+                        identifier: Approved_for_INT
+                        spec:
+                          approvalMessage: Approved for INT
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for perf
+                        identifier: Approval_for_perf
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for Stage or Prod
+                        identifier: Approval_for_Stage_or_Prod
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
             rollbackSteps:
               - step:
                   name: Helm Rollback

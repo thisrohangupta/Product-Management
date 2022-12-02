@@ -277,6 +277,10 @@ pipeline:
                             disallowPipelineExecutor: false
                           approverInputs: []
                         timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
+                        failureStrategies: []
                     - step:
                         name: "Notify Deployment "
                         identifier: Notify_Deployment

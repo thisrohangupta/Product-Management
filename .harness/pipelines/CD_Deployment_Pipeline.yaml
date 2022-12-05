@@ -12,22 +12,16 @@ pipeline:
         type: Deployment
         spec:
           deploymentType: Kubernetes
-          service:
-            serviceRef: portal
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  artifacts:
-                    primary:
-                      type: DockerRegistry
-                      spec:
-                        tag: <+input>
           environment:
             environmentRef: staging
             deployToAll: false
             infrastructureDefinitions:
               - identifier: productstaging
+                inputs:
+                  identifier: productstaging
+                  type: KubernetesDirect
+                  spec:
+                    namespace: <+input>.allowedValues(dev,qa,prod)
           execution:
             steps:
               - step:
@@ -46,6 +40,55 @@ pipeline:
                   timeout: 10m
                   spec:
                     pruningEnabled: false
+          services:
+            values:
+              - serviceRef: portal
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          type: DockerRegistry
+                          spec:
+                            tag: <+input>
+              - serviceRef: bitnami
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      manifests:
+                        - manifest:
+                            identifier: dev
+                            type: HelmChart
+                            spec:
+                              chartVersion: <+input>
+              - serviceRef: kustomize
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          type: DockerRegistry
+                          spec:
+                            tag: <+input>
+              - serviceRef: helloworldKustomize
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      manifests:
+                        - manifest:
+                            identifier: helloWorldKustomize
+                            type: Kustomize
+                            spec:
+                              store:
+                                type: Github
+                                spec:
+                                  branch: <+input>
+            metadata:
+              parallel: false
         tags: {}
         failureStrategies:
           - onFailure:

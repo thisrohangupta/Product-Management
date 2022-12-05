@@ -610,3 +610,18 @@ pipeline:
             type: String
             description: ""
             value: <+input>
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        template:
+          templateRef: account.CD_Deploy
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>

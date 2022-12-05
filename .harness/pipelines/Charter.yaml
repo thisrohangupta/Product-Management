@@ -1,0 +1,627 @@
+pipeline:
+  name: Charter
+  identifier: Charter
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: WIN-Release-Primary-validation
+        identifier: WINReleasePrimaryvalidation
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: NativeHelm
+          service:
+            serviceRef: <+input>
+            serviceInputs: <+input>
+          environment:
+            environmentRef: <+input>
+            deployToAll: false
+            environmentInputs: <+input>
+            infrastructureDefinitions: <+input>
+          execution:
+            steps:
+              - stepGroup:
+                  name: Deploy Containers
+                  identifier: Deploy_Containers
+                  steps:
+                    - step:
+                        type: ShellScript
+                        name: Set_PrePrimary_Value
+                        identifier: Set_PrePrimary_Value
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                PRIMARY_WEIGHT=""
+                                CANARY_WEIGHT=""
+                                CANARY_DEPLOY_MODE=""
+
+                                env=`echo ${infra.name} | sed -e "s/-canary//g"`
+
+                                enable_canary_deploy="false"
+
+                                if [[  (${workflow.variables.ENABLE_CANARY_INT} == "true" &&  $env == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "true" &&  $env == 'perf') || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "true" &&  $env == 'stage') || ( ${workflow.variables.ENABLE_CANARY_PROD} == "true" &&  $env == 'prod')  ]]; then
+
+                                     enable_canary_deploy="true"
+                                fi
+
+                                if [[ $enable_canary_deploy == "true" ]]; then
+                                   export PRIMARY_WEIGHT="0"
+                                   export CANARY_WEIGHT="100"
+                                   export CANARY_DEPLOY_MODE="true"
+                                else
+                                   export PRIMARY_WEIGHT="100"
+                                   export CANARY_WEIGHT="0"
+                                   export CANARY_DEPLOY_MODE="false"
+                                fi
+
+                                #export PRIMARY_WEIGHT="100"
+                                #export CANARY_WEIGHT="0"
+
+                                echo "PRIMARY_WEIGHT Value"
+                                echo ${PRIMARY_WEIGHT}
+
+                                echo "CANARY_WEIGHT Value"
+                                echo ${CANARY_WEIGHT}
+
+                                echo "CANARY_DEPLOY_MODE Value"
+                                echo ${CANARY_DEPLOY_MODE}
+
+                                export INFRA_NAME=`echo ${infra.name} | sed -e "s/-canary//g"`
+
+                                echo "INFRA NAME"
+                                echo ${INFRA_NAME}
+                          environmentVariables: []
+                          outputVariables:
+                            - name: CANARY_WEIGHT
+                              type: String
+                              value: CANARY_WEIGHT
+                            - name: PRIMARY_WEIGHT
+                              type: String
+                              value: PRIMARY_WEIGHT
+                            - name: INFRA_NAME
+                              type: String
+                              value: INFRA_NAME
+                            - name: CANARY_DEPLOY_MODE
+                              type: String
+                              value: CANARY_DEPLOY_MODE
+                        timeout: 10m
+                    - step:
+                        name: Fetch_EWS_Creds
+                        identifier: Fetch_EWS_Creds
+                        template:
+                          templateRef: Fetch_EWS_Creds
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
+                    - step:
+                        name: "Publish Helm Chart Version "
+                        identifier: Publish_Helm_Chart_Version
+                        template:
+                          templateRef: Publish_Helm_Chart_Version
+                          versionLabel: "1.0"
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: ${workflow.variables.ENABLE_CANARY_INT} == "true" && ${workflow.variables.INFRA_NAME}!='int' ) || (${workflow.variables.ENABLE_CANARY_INT} == "true" || ${infra.name}!='int')
+                    - step:
+                        name: Pre Validation
+                        identifier: Pre_Validation
+                        template:
+                          templateRef: Pre_validation
+                          versionLabel: "1.0"
+                          templateInputs:
+                            type: ShellScript
+                            when:
+                              condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
+                    - step:
+                        type: HarnessApproval
+                        name: Pre Approval
+                        identifier: Pre_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
+                        failureStrategies: []
+                    - step:
+                        name: Helm Deployment
+                        identifier: helmDeployment
+                        type: HelmDeploy
+                        timeout: 10m
+                        spec:
+                          skipDryRun: false
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for traffic change
+                        identifier: Approval_for_traffic_change
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
+                    - step:
+                        type: ShellScript
+                        name: Set_PostPrimary_Value
+                        identifier: Set_PostPrimary_Value
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
+                                if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
+                                  echo "Not running in intended delegate of $CLUSTER_NAME"
+                                  exit 1
+                                fi
+
+
+                                namespace=${workflow.variables.CANARY_NAMESPACE}
+
+                                primaryweight=100
+                                canaryweight=0
+
+
+                                rm -rf canary-scripts
+
+                                #git clone --single-branch --branch master 'https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scp/scpdevops/k8s-infrastructure/canary-scripts.git'
+
+                                git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
+
+                                cd canary-scripts
+
+                                ./split_traffic.sh "$namespace" $primaryweight $canaryweight
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
+                    - step:
+                        type: HarnessApproval
+                        name: Delete Canary Approval
+                        identifier: Delete_Canary_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
+                    - step:
+                        type: ShellScript
+                        name: Delete Canary
+                        identifier: Delete_Canary
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                KOPS_CLUSTER_BASE=$(kubectl -n kube-system get configmap kops-controller -o jsonpath={.data.'config\.yaml'} | jq '.configBase')
+                                if [[ $KOPS_CLUSTER_BASE != *"${workflow.variables.K8S_CLUSTER_ID}"* ]]; then
+                                  echo "Not running in intended delegate of $CLUSTER_NAME"
+                                  exit 1
+                                fi
+
+
+                                namespace=${workflow.variables.CANARY_NAMESPACE}
+
+                                rm -rf canary-scripts
+
+
+
+                                git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/canary-scripts.git'
+
+                                cd canary-scripts
+
+                                ./delete_canary_deploy.sh "$namespace" 
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: ( ${workflow.variables.ENABLE_CANARY_INT} == "false" && ${infra.name} == 'int' ) || ( ${workflow.variables.ENABLE_CANARY_PERF} == "false" && ${infra.name} == 'perf' ) || ( ${workflow.variables.ENABLE_CANARY_STAGE} == "false" && ${infra.name} == 'stage' ) || ( ${workflow.variables.ENABLE_CANARY_PROD} == "false" && ${infra.name} == 'prod' )
+                        failureStrategies: []
+                    - step:
+                        name: PostValidation
+                        identifier: PostValidation
+                        template:
+                          templateRef: Post_Validation
+                          versionLabel: "1.0"
+                    - step:
+                        type: HarnessApproval
+                        name: Post Approval
+                        identifier: Post_Approval
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ( ${infra.name}=='perf' || ${infra.name}=='int')
+                        failureStrategies: []
+                    - step:
+                        name: "Notify Deployment "
+                        identifier: Notify_Deployment
+                        template:
+                          templateRef: Notify_Deployment
+                          versionLabel: "1.0"
+                    - step:
+                        type: ShellScript
+                        name: Trigger TechMobile Testing
+                        identifier: Trigger_TechMobile_Testing
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                rm -rf win-testing
+
+                                git clone https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scpautomation/win-testing.git
+
+                                declare -A accounts=(
+                                  ["int"]=${secrets.getValue("win_account_int")} 
+                                  ["perf"]=${secrets.getValue("win_account_perf")}
+                                  ["prod"]=${secrets.getValue("win_account_prod")}
+                                )
+
+                                declare -A usernames=(
+                                  ["int"]=${secrets.getValue("techmobile_user")}
+                                  ["perf"]=${secrets.getValue("techmobile_user_perf")}
+                                  ["prod"]=${secrets.getValue("techmobile_user_prod")}
+                                )
+
+                                declare -A passwords=(
+                                  ["int"]=${secrets.getValue("techmobile_password")} 
+                                  ["perf"]=${secrets.getValue("techmobile_password_perf")}
+                                  ["prod"]=${secrets.getValue("techmobile_password_prod")}
+                                )
+
+                                cd win-testing
+
+                                pip3 install selenium
+                                pip3 install requests
+
+                                xvfb-run python3 win_techmobile.py --env ${infra.name} \
+                                --tech_mobile_creds ${usernames["${infra.name}"]} ${passwords["${infra.name}"]} \
+                                --win_server_account ${accounts["${infra.name}"]}
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: "\"true\" == \"true\""
+                        failureStrategies: []
+                    - step:
+                        type: ShellScript
+                        name: Trigger Performance Testing
+                        identifier: Trigger_Performance_Testing
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                API_TOKEN=${secrets.getValue("jenkins_jmeter_api")}
+                                JENKINS_USERNAME=${secrets.getValue("jenkins_jmeter_username")}
+
+                                AWS_KEY=${secrets.getValue("scpFirmwareBatchUpgradeHarnessUser_key")}
+                                AWS_SECRET=${secrets.getValue("scpFirmwareBatchUpgradeHarnessUser_secret")}
+
+                                #rm -rf shared-components
+
+                                #git clone --single-branch --branch master 'https://harness_user:${secrets.getValue("git_harness_user_password")}@stash.dev-charter.net/stash/scm/pip/shared-components.git'
+
+                                #cd shared-components/jmeter
+
+                                rm -rf utils
+
+                                git clone --single-branch --branch master 'https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scpautomation/cicd/utils.git'
+
+                                cd utils/jmeter
+
+                                pip3 install -r requirements.txt
+
+                                component=""
+
+                                #if [ "${service.name}" = "win-ui" ];then
+                                #  component="ui"
+                                #else
+                                #  component="server"
+                                #fi
+
+                                component="ui"
+
+                                STATUS="$(python3 jmeter.py -k "${AWS_KEY}" \
+                                -s "${AWS_SECRET}" \
+                                -r "${workflow.variables.AWS_ROLE}" \
+                                -n "win" \
+                                -c "${component}" \
+                                -e "${infra.name}" \
+                                -u "${JENKINS_USERNAME}" \
+                                -a "${API_TOKEN}")"
+
+                                echo $STATUS
+
+                                sleep 10s 
+                                #component="server"
+
+                                #STATUS="$(python3 jmeter.py -k "${AWS_KEY}" \
+                                #-s "${AWS_SECRET}" \
+                                #-r "${workflow.variables.AWS_ROLE}" \
+                                #-n "win" \
+                                #-c "${component}" \
+                                #-e "${infra.name}" \
+                                #-u "${JENKINS_USERNAME}" \
+                                #-a "${API_TOKEN}")"
+
+                                #echo $STATUS
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: <+env.name> == "prod"
+                        failureStrategies: []
+                    - step:
+                        type: ShellScript
+                        name: Trigger Robot Tests
+                        identifier: Trigger_Robot_Tests
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |-
+                                pip3 install requests
+                                pip3 install redis
+
+                                python3 -c '
+
+                                import requests
+                                import json
+                                import redis
+
+                                conn = redis.Redis(host="scp-robot-automation.i9tdcv.ng.0001.use1.cache.amazonaws.com", port=6379, db=0, decode_responses=True) 
+
+                                conn.set("deployments:${service.name}:${infra.name}:version", "${context.chart.CHART_VERSION}")
+                                tags = conn.smembers("tags:win")
+
+                                url = "https://app.harness.io/gateway/api/webhooks/Sg2917dEy2T9WSqJjfRkD3v2MNkfpBx9VbR528jE?accountId=vQWExnj-Sy2pmVJ8zr1MnQ"
+
+                                data = {
+                                       "application": "skQiHPfjS067eEVNmLu1-A",
+                                       "parameters": {
+                                                     "ROBOT_TAGS": " ".join(tags),
+                                                     "ROBOT_TEST_FILE": "winui",
+                                                     "EMAILS": "DL-SCP-INT-TEST@charter.com DL-SCP-AUTOMATION@charter.com zach.smialek@charter.com jeffrey.swanson@charter.com",
+                                                     "FAILURE_PERCENTAGE": "20",
+                                                     "ENV": "${infra.name}",
+                                                     "ROUTER_MODEL": None
+                                                     }
+                                       }
+
+                                headers = { "Content-Type": "application/json"}
+                                r = requests.request(method="POST", url=url, data=json.dumps(data), headers=headers)
+
+                                if not r.ok:
+                                    print("something went wrong starting scl tests", r.text, r.status_code)
+                                '
+                          environmentVariables: []
+                          outputVariables: []
+                        timeout: 10m
+                        when:
+                          stageStatus: Success
+                          condition: "\"true\" == \"true\""
+                        failureStrategies: []
+              - stepGroup:
+                  name: Wrap Up
+                  identifier: Wrap_Up
+                  steps:
+                    - step:
+                        type: HarnessApproval
+                        name: Approved for INT
+                        identifier: Approved_for_INT
+                        spec:
+                          approvalMessage: Approved for INT
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${infra.name} != "int"
+                        failureStrategies: []
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for perf
+                        identifier: Approval_for_perf
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${infra.name} != "perf"
+                        failureStrategies: []
+                    - step:
+                        type: HarnessApproval
+                        name: Approval for Stage or Prod
+                        identifier: Approval_for_Stage_or_Prod
+                        spec:
+                          approvalMessage: Please review the following information and approve the pipeline progression
+                          includePipelineExecutionHistory: true
+                          approvers:
+                            userGroups:
+                              - account._account_all_users
+                            minimumCount: 1
+                            disallowPipelineExecutor: false
+                          approverInputs: []
+                        timeout: 1d
+                        when:
+                          stageStatus: Success
+                          condition: ${env.name} != "prod"
+                        failureStrategies: []
+            rollbackSteps:
+              - step:
+                  name: Helm Rollback
+                  identifier: helmRollback
+                  type: HelmRollback
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  name: Notify Rollback
+                  identifier: Notify_Rollback
+                  template:
+                    templateRef: Notify_Rollback
+                    versionLabel: "1.0"
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+        variables:
+          - name: CHART_VERSION
+            type: String
+            description: ""
+            value: <+input>
+          - name: DEPLOYMENT_NOTIFICATION_EMAILS
+            type: String
+            description: ""
+            value: <+input>
+          - name: PROJECT
+            type: String
+            description: ""
+            value: win
+          - name: GIT_BRANCH_NAME
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENV
+            type: String
+            description: ""
+            value: <+input>
+          - name: RELEASE_VERSION
+            type: String
+            description: ""
+            value: arn:aws:iam::750300312428:role/scpFirmwareBatchUpgradeHarness
+          - name: AWS_ROLE
+            type: String
+            description: ""
+            value: <+input>
+          - name: CANARY_NAMESPACE
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_INT
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_PERF
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_STAGE
+            type: String
+            description: ""
+            value: <+input>
+          - name: ENABLE_CANARY_PROD
+            type: String
+            description: ""
+            value: <+input>
+          - name: CLUSTER_TAG
+            type: String
+            description: ""
+            value: <+input>
+          - name: K8S_CLUSTER_ID
+            type: String
+            description: ""
+            value: <+input>
+          - name: GIT_REPO
+            type: String
+            description: ""
+            value: win-helm-chart
+          - name: SUB_GROUP
+            type: String
+            description: ""
+            value: scp-services
+          - name: REPOSITORY_NAME
+            type: String
+            description: ""
+            value: win-helm-chart
+          - name: previous_chart_version
+            type: String
+            description: ""
+            value: <+input>
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        template:
+          templateRef: account.CD_Deploy
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>

@@ -12,13 +12,6 @@ pipeline:
         type: Deployment
         spec:
           deploymentType: Kubernetes
-          service:
-            serviceRef: <+pipeline.variables.serviceName>
-          environment:
-            environmentRef: L3
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: L3_K8s
           execution:
             steps:
               - step:
@@ -41,6 +34,55 @@ pipeline:
                   type: K8sRollingRollback
                   timeout: 10m
                   spec: {}
+          services:
+            values:
+              - serviceRef: DockerCiscoPlus
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          type: DockerRegistry
+                          spec:
+                            imagePath: <+input>
+                            tag: <+input>
+              - serviceRef: K8s
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      variables:
+                        - name: cpu
+                          type: String
+                          value: <+input>
+                        - name: memory
+                          type: String
+                          value: <+input>
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: <+input>
+                          sources: <+input>
+              - serviceRef: Prometheus
+            metadata:
+              parallel: true
+          environments:
+            metadata:
+              parallel: true
+            values:
+              - environmentRef: L3
+                deployToAll: false
+                infrastructureDefinitions:
+                  - identifier: L3_K8s
+              - environmentRef: demo_env
+                deployToAll: true
+                infrastructureDefinitions: <+input>
+              - environmentRef: dev
+                deployToAll: true
+                infrastructureDefinitions: <+input>
+              - environmentRef: eenvironment
+                deployToAll: true
+                infrastructureDefinitions: <+input>
         tags: {}
         failureStrategies:
           - onFailure:

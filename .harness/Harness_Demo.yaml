@@ -36,17 +36,6 @@ pipeline:
                   spec: {}
           services:
             values:
-              - serviceRef: DockerCiscoPlus
-                serviceInputs:
-                  serviceDefinition:
-                    type: Kubernetes
-                    spec:
-                      artifacts:
-                        primary:
-                          type: DockerRegistry
-                          spec:
-                            imagePath: <+input>
-                            tag: <+input>
               - serviceRef: K8s
                 serviceInputs:
                   serviceDefinition:

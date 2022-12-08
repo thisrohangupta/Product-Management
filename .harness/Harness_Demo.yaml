@@ -6,6 +6,64 @@ pipeline:
   tags: {}
   stages:
     - stage:
+        name: Deploy to L2
+        identifier: Deploy_to_L2
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: publicnginx
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      type: DockerRegistry
+                      spec:
+                        tag: <+input>
+          environment:
+            environmentRef: L2
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: L2_K8s
+          execution:
+            steps:
+              - step:
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+              - step:
+                  name: Clean up L2
+                  identifier: Clean_up_L2
+                  template:
+                    templateRef: Cleanup_Demo
+                    versionLabel: 0.0.1
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+    - stage:
+        name: Approval to Production
+        identifier: Approval_to_Production
+        template:
+          templateRef: Approval_to_Production
+          versionLabel: 0.0.1
+    - stage:
         name: Deploy to L3
         identifier: Deploy_to_L3
         description: ""
@@ -79,64 +137,6 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
-    - stage:
-        name: Deploy to L2
-        identifier: Deploy_to_L2
-        description: ""
-        type: Deployment
-        spec:
-          deploymentType: Kubernetes
-          service:
-            serviceRef: publicnginx
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  artifacts:
-                    primary:
-                      type: DockerRegistry
-                      spec:
-                        tag: <+input>
-          environment:
-            environmentRef: L2
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: L2_K8s
-          execution:
-            steps:
-              - step:
-                  name: Rollout Deployment
-                  identifier: rolloutDeployment
-                  type: K8sRollingDeploy
-                  timeout: 10m
-                  spec:
-                    skipDryRun: false
-              - step:
-                  name: Clean up L2
-                  identifier: Clean_up_L2
-                  template:
-                    templateRef: Cleanup_Demo
-                    versionLabel: 0.0.1
-            rollbackSteps:
-              - step:
-                  name: Rollback Rollout Deployment
-                  identifier: rollbackRolloutDeployment
-                  type: K8sRollingRollback
-                  timeout: 10m
-                  spec: {}
-        tags: {}
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
-    - stage:
-        name: Approval to Production
-        identifier: Approval_to_Production
-        template:
-          templateRef: Approval_to_Production
-          versionLabel: 0.0.1
     - stage:
         name: Deploy to L1
         identifier: Deploy_to_L1

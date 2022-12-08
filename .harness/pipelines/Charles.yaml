@@ -35,24 +35,21 @@ pipeline:
                     pruningEnabled: false
           environments:
             metadata:
-              parallel: true
+              parallel: false
             values:
+              - environmentRef: staging
+                deployToAll: false
+                infrastructureDefinitions:
+                  - identifier: productstaging
+                    inputs:
+                      identifier: productstaging
+                      type: KubernetesDirect
+                      spec:
+                        namespace: <+input>.allowedValues(dev,qa,prod)
               - environmentRef: L1
                 deployToAll: false
                 infrastructureDefinitions:
                   - identifier: L1
-              - environmentRef: L2
-                deployToAll: false
-                infrastructureDefinitions:
-                  - identifier: L2_K8s
-              - environmentRef: L3
-                deployToAll: false
-                infrastructureDefinitions:
-                  - identifier: L3_Default_K8s
-              - environmentRef: WellsFargo
-                deployToAll: false
-                infrastructureDefinitions:
-                  - identifier: devk8s
         tags: {}
         failureStrategies:
           - onFailure:

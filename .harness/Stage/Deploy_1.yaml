@@ -1,6 +1,6 @@
 template:
   name: Deploy
-  identifier: Deploy
+  identifier: Deploy1
   versionLabel: "1.0"
   type: Stage
   projectIdentifier: Rohan

@@ -1,6 +1,6 @@
 template:
   name: Deploy
-  identifier: Deploy1
+  identifier: Deploy
   versionLabel: "1.0"
   type: Stage
   projectIdentifier: Rohan
@@ -27,7 +27,7 @@ template:
               timeout: 10m
               spec:
                 skipDryRun: false
-                pruningEnabled: false
+                pruningEnabled: true
           - step:
               type: ShellScript
               name: Shell Script

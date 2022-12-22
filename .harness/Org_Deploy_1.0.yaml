@@ -44,3 +44,4 @@ template:
     when:
       pipelineStatus: Success
       condition: <+input>
+    delegateSelectors: <+input>

@@ -42,6 +42,6 @@ template:
           action:
             type: StageRollback
     when:
-      pipelineStatus: Success
+      pipelineStatus: All
       condition: <+input>
     delegateSelectors: <+input>

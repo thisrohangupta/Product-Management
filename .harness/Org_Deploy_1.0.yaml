@@ -52,7 +52,19 @@ template:
                             repoName: Product-Management
                             branch: ",ain"
               timeout: 10m
-              failureStrategies: []
+              failureStrategies:
+                - onFailure:
+                    errors:
+                      - AllErrors
+                    action:
+                      type: Retry
+                      spec:
+                        retryCount: 3
+                        retryIntervals:
+                          - 2s
+                        onRetryFailure:
+                          action:
+                            type: StageRollback
         rollbackSteps:
           - step:
               name: Rollback Rollout Deployment

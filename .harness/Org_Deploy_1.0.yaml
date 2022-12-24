@@ -27,6 +27,32 @@ template:
               spec:
                 skipDryRun: false
                 pruningEnabled: false
+          - step:
+              type: K8sApply
+              name: Apply DB Migration Job
+              identifier: Apply_DB_Migration_Job
+              spec:
+                filePaths:
+                  - database-migration.yaml
+                skipDryRun: false
+                skipSteadyStateCheck: true
+                skipRendering: false
+                overrides:
+                  - manifest:
+                      identifier: DBValues
+                      type: Values
+                      spec:
+                        store:
+                          type: Github
+                          spec:
+                            connectorRef: account.ThisRohanGupta
+                            gitFetchType: Branch
+                            paths:
+                              - migration-values.yaml
+                            repoName: Product-Management
+                            branch: ",ain"
+              timeout: 10m
+              failureStrategies: []
         rollbackSteps:
           - step:
               name: Rollback Rollout Deployment

@@ -18,10 +18,10 @@ pipeline:
             serviceRef: <+input>
             serviceInputs: <+input>
           environment:
-            environmentRef: staging
+            environmentRef: <+input>
             deployToAll: false
-            infrastructureDefinitions:
-              - identifier: productstaging
+            environmentInputs: <+input>
+            infrastructureDefinitions: <+input>
           execution:
             steps:
               - step:
@@ -52,3 +52,21 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: Deploy to Prod
+        identifier: Deploy_to_Prod
+        template:
+          templateRef: account.CD_Deploy
+          versionLabel: "1.0"
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>
+            when:
+              condition: <+input>

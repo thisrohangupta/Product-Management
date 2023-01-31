@@ -1,0 +1,16 @@
+environment:
+  name: staging
+  identifier: staging
+  tags:
+    environment: staging
+    status: non-regulated
+  type: PreProduction
+  orgIdentifier: default
+  projectIdentifier: Rohan
+  variables:
+    - name: db_host
+      type: String
+      value: postgres-staging
+    - name: DB_PASS_STAGING
+      type: Secret
+      value: Rohan_QA

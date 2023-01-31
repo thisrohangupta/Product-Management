@@ -1,0 +1,25 @@
+pipeline:
+  name: Pipeline service
+  identifier: Pipeline_service
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Dev
+        identifier: Dev
+        template:
+          templateRef: account.CD_Deploy
+          versionLabel: "1.0"
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>
+            when:
+              condition: <+input>

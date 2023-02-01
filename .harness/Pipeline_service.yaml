@@ -6,20 +6,54 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: Dev
-        identifier: Dev
-        template:
-          templateRef: account.CD_Deploy
-          versionLabel: "1.0"
-          templateInputs:
-            type: Deployment
-            spec:
-              service:
-                serviceRef: <+input>
-                serviceInputs: <+input>
-              environment:
-                environmentRef: <+input>
-                environmentInputs: <+input>
-                infrastructureDefinitions: <+input>
-            when:
-              condition: <+input>
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: pipelinenginx
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+          environment:
+            environmentRef: staging
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: productstaging
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: Shell Script
+                  identifier: Shell_Script
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: <+service.name>
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

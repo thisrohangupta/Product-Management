@@ -21,6 +21,7 @@ pipeline:
                   artifacts:
                     primary:
                       primaryArtifactRef: <+input>
+                      sources: <+input>
           environment:
             environmentRef: staging
             deployToAll: false

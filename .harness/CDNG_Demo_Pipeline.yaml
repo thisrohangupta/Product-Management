@@ -39,6 +39,18 @@ pipeline:
                     skipDryRun: false
                     pruningEnabled: false
                   timeout: 10m
+              - step:
+                  type: JiraCreate
+                  name: Jira Create_1
+                  identifier: JiraCreate_1
+                  spec:
+                    connectorRef: <+input>
+                    projectKey: <+input>
+                    issueType: <+input>
+                    fields:
+                      - name: Component
+                        value: Kubernetes
+                  timeout: 1d
             rollbackSteps:
               - step:
                   name: Canary Delete

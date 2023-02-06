@@ -1,98 +1,104 @@
 pipeline:
-  name: CDNG Demo Pipeline
-  identifier: CDNG_Demo_Pipeline
-  projectIdentifier: Rohan
-  orgIdentifier: default
+  name: "CDNG Demo Pipeline"
+  identifier: "CDNG_Demo_Pipeline"
+  projectIdentifier: "Rohan"
+  orgIdentifier: "default"
   tags:
-    owner: Rohan
-    status: demo
+    owner: "Rohan"
+    status: "demo"
   stages:
-    - stage:
-        name: Deploy to Dev
-        identifier: Deploy_to_Dev
-        description: ""
-        type: Deployment
-        spec:
-          deploymentType: Kubernetes
-          service:
-            serviceRef: nginxk8s
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  artifacts:
-                    primary:
-                      primaryArtifactRef: <+input>
-                      sources: <+input>
-          environment:
-            environmentRef: <+input>
-            deployToAll: false
-            environmentInputs: <+input>
-            infrastructureDefinitions: <+input>
-          execution:
-            steps:
-              - step:
-                  type: K8sRollingDeploy
-                  name: Rolling Deployment
-                  identifier: Rolling_Deployment
-                  spec:
-                    skipDryRun: false
-                    pruningEnabled: false
-                  timeout: 10m
-              - step:
-                  type: JiraCreate
-                  name: Jira Create_1
-                  identifier: JiraCreate_1
-                  spec:
-                    connectorRef: <+input>
-                    projectKey: <+input>
-                    issueType: <+input>
-                    fields:
-                      - name: Component
-                        value: Kubernetes
-                  timeout: 1d
-            rollbackSteps:
-              - step:
-                  name: Canary Delete
-                  identifier: rollbackCanaryDelete
-                  type: K8sCanaryDelete
-                  timeout: 10m
-                  spec: {}
-              - step:
-                  name: Rolling Rollback
-                  identifier: rollingRollback
-                  type: K8sRollingRollback
-                  timeout: 10m
-                  spec: {}
-        tags: {}
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
-    - stage:
-        name: Deploy to Prod
-        identifier: Deploy_to_Prod
-        template:
-          templateRef: account.CD_Deploy
-          versionLabel: "1.0"
-          templateInputs:
-            type: Deployment
-            spec:
-              service:
-                serviceInputs:
-                  serviceDefinition:
-                    type: Kubernetes
+  - stage:
+      name: "Deploy to Dev"
+      identifier: "Deploy_to_Dev"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "Kubernetes"
+        service:
+          serviceRef: "nginxk8s"
+          serviceInputs:
+            serviceDefinition:
+              type: "Kubernetes"
+              spec:
+                manifests:
+                - manifest:
+                    identifier: "nginx"
+                    type: "HelmChart"
                     spec:
-                      artifacts:
-                        primary:
-                          primaryArtifactRef: <+input>
-                          sources: <+input>
-                serviceRef: nginxcanary
-              environment:
-                environmentRef: <+input>
-                environmentInputs: <+input>
-                infrastructureDefinitions: <+input>
-            when:
-              condition: <+input>
+                      chartVersion: "<+input>"
+                artifacts:
+                  primary:
+                    primaryArtifactRef: "<+input>"
+                    sources: "<+input>"
+        environment:
+          environmentRef: "<+input>"
+          deployToAll: false
+          environmentInputs: "<+input>"
+          infrastructureDefinitions: "<+input>"
+        execution:
+          steps:
+          - step:
+              type: "K8sRollingDeploy"
+              name: "Rolling Deployment"
+              identifier: "Rolling_Deployment"
+              spec:
+                skipDryRun: false
+                pruningEnabled: false
+              timeout: "10m"
+          - step:
+              type: "JiraCreate"
+              name: "Jira Create_1"
+              identifier: "JiraCreate_1"
+              spec:
+                connectorRef: "<+input>"
+                projectKey: "<+input>"
+                issueType: "<+input>"
+                fields:
+                - name: "Component"
+                  value: "Kubernetes"
+              timeout: "1d"
+          rollbackSteps:
+          - step:
+              name: "Canary Delete"
+              identifier: "rollbackCanaryDelete"
+              type: "K8sCanaryDelete"
+              timeout: "10m"
+              spec: {}
+          - step:
+              name: "Rolling Rollback"
+              identifier: "rollingRollback"
+              type: "K8sRollingRollback"
+              timeout: "10m"
+              spec: {}
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"
+  - stage:
+      name: "Deploy to Prod"
+      identifier: "Deploy_to_Prod"
+      template:
+        templateRef: "account.CD_Deploy"
+        versionLabel: "1.0"
+        templateInputs:
+          type: "Deployment"
+          spec:
+            service:
+              serviceRef: "nginxcanary"
+              serviceInputs:
+                serviceDefinition:
+                  type: "Kubernetes"
+                  spec:
+                    artifacts:
+                      primary:
+                        primaryArtifactRef: "<+input>"
+                        sources: "<+input>"
+            environment:
+              environmentRef: "<+input>"
+              environmentInputs: "<+input>"
+              infrastructureDefinitions: "<+input>"
+          when:
+            condition: "<+input>"

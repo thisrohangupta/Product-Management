@@ -57,6 +57,12 @@ pipeline:
                       - name: Component
                         value: Kubernetes
                   timeout: 1d
+              - stepGroup:
+                  name: Demo Canary
+                  identifier: Demo_Canary
+                  template:
+                    templateRef: Demo
+                    versionLabel: "1.0"
             rollbackSteps:
               - step:
                   name: Canary Delete

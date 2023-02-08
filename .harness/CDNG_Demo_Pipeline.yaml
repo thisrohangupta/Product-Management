@@ -41,8 +41,11 @@ pipeline:
                   type: K8sDryRun
                   name: Dry Run
                   identifier: Dry_Run
-                  spec: {}
+                  spec:
+                    delegateSelectors:
+                      - cd-pm
                   timeout: 10m
+                  failureStrategies: []
               - step:
                   type: HarnessApproval
                   name: Harness Approval

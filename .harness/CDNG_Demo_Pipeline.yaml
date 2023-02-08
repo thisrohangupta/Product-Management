@@ -25,10 +25,10 @@ pipeline:
                       primaryArtifactRef: <+input>
                       sources: <+input>
           environment:
-            environmentRef: <+input>
+            environmentRef: staging
             deployToAll: false
-            environmentInputs: <+input>
-            infrastructureDefinitions: <+input>
+            infrastructureDefinitions:
+              - identifier: productstaging
           execution:
             steps:
               - step:

@@ -28,7 +28,13 @@ pipeline:
             environmentRef: staging
             deployToAll: false
             infrastructureDefinitions:
-              - identifier: productstaging
+              - identifier: prod2
+                inputs:
+                  identifier: prod2
+                  type: KubernetesDirect
+                  spec:
+                    connectorRef: Kubernetes_Demo
+                    namespace: dev
           execution:
             steps:
               - step:

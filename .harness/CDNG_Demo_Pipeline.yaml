@@ -24,17 +24,6 @@ pipeline:
                     primary:
                       primaryArtifactRef: <+input>
                       sources: <+input>
-          environment:
-            environmentRef: staging
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: prod2
-                inputs:
-                  identifier: prod2
-                  type: KubernetesDirect
-                  spec:
-                    connectorRef: Kubernetes_Demo
-                    namespace: dev
           execution:
             steps:
               - step:
@@ -75,6 +64,16 @@ pipeline:
                   type: K8sRollingRollback
                   timeout: 10m
                   spec: {}
+          environments:
+            metadata:
+              parallel: true
+            values:
+              - environmentRef: Azure_Web_Apps
+                deployToAll: true
+                infrastructureDefinitions: <+input>
+              - environmentRef: L3
+                deployToAll: true
+                infrastructureDefinitions: <+input>
         tags: {}
         failureStrategies:
           - onFailure:

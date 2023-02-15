@@ -1,0 +1,120 @@
+---
+pipeline:
+  projectIdentifier: "Rohan"
+  orgIdentifier: "default"
+  tags:
+    owner: "Rohan"
+    status: "demo"
+  stages:
+  - stage:
+      name: "Deploy to Dev"
+      identifier: "Deploy_to_Dev"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "Kubernetes"
+        execution:
+          steps:
+          - step:
+              type: "K8sDryRun"
+              name: "Dry Run"
+              identifier: "Dry_Run"
+              spec:
+                delegateSelectors:
+                - "cd-pm"
+              timeout: "10m"
+              failureStrategies: []
+          - step:
+              type: "HarnessApproval"
+              name: "Harness Approval"
+              identifier: "Harness_Approval"
+              spec:
+                approvalMessage: "Please review the following information and approve\
+                  \ the pipeline progression"
+                includePipelineExecutionHistory: true
+                approvers:
+                  userGroups:
+                  - "account._account_all_users"
+                  minimumCount: 1
+                  disallowPipelineExecutor: false
+                approverInputs: []
+              timeout: "1d"
+          - step:
+              type: "K8sRollingDeploy"
+              name: "Rolling Deployment"
+              identifier: "Rolling_Deployment"
+              spec:
+                skipDryRun: false
+                pruningEnabled: false
+              timeout: "10m"
+          rollbackSteps:
+          - step:
+              name: "Rolling Rollback"
+              identifier: "rollingRollback"
+              type: "K8sRollingRollback"
+              timeout: "10m"
+              spec: {}
+        environments:
+          metadata:
+            parallel: true
+          values:
+          - environmentRef: "Azure_Web_Apps"
+            deployToAll: true
+            infrastructureDefinitions: "<+input>"
+          - environmentRef: "L3"
+            deployToAll: true
+            infrastructureDefinitions: "<+input>"
+        services:
+          values: "<+input>"
+          metadata:
+            parallel: false
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"
+  - stage:
+      name: "Deploy QA"
+      identifier: "Deploy_QA"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "Kubernetes"
+        service:
+          useFromStage:
+            stage: "Deploy_to_Dev"
+        environment:
+          environmentRef: "staging"
+          deployToAll: false
+          infrastructureDefinitions:
+          - identifier: "productstaging"
+        execution:
+          steps:
+          - step:
+              name: "Rollout Deployment"
+              identifier: "rolloutDeployment"
+              type: "K8sRollingDeploy"
+              timeout: "10m"
+              spec:
+                skipDryRun: false
+                pruningEnabled: false
+          rollbackSteps:
+          - step:
+              name: "Rollback Rollout Deployment"
+              identifier: "rollbackRolloutDeployment"
+              type: "K8sRollingRollback"
+              timeout: "10m"
+              spec:
+                pruningEnabled: false
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"
+  allowStageExecutions: true
+  identifier: "CLone_for_STO"
+  name: "CLone for STO"

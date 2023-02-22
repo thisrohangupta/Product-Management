@@ -115,4 +115,22 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: template
+        identifier: template
+        template:
+          templateRef: Deploy_Stage_1
+          versionLabel: 1.0.0
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: <+input>
+                          sources: <+input>
   allowStageExecutions: true

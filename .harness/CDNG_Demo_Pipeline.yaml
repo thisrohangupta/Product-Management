@@ -73,8 +73,13 @@ pipeline:
                     spec:
                       artifacts:
                         primary:
-                          primaryArtifactRef: <+input>
-                          sources: <+input>
+                          primaryArtifactRef: qa
+                          sources:
+                            - identifier: qa
+                              type: DockerRegistry
+                              spec:
+                                imagePath: <+input>
+                                tag: <+input>
             metadata:
               parallel: false
         tags: {}

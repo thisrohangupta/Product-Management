@@ -65,7 +65,16 @@ pipeline:
                 deployToAll: true
                 infrastructureDefinitions: <+input>
           services:
-            values: <+input>
+            values:
+              - serviceRef: nginxdemo
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: <+input>
+                          sources: <+input>
             metadata:
               parallel: false
         tags: {}

@@ -72,14 +72,7 @@ pipeline:
                     type: Kubernetes
                     spec:
                       artifacts:
-                        primary:
-                          primaryArtifactRef: qa
-                          sources:
-                            - identifier: qa
-                              type: DockerRegistry
-                              spec:
-                                imagePath: <+input>
-                                tag: <+input>
+                        primary: {}
             metadata:
               parallel: false
         tags: {}

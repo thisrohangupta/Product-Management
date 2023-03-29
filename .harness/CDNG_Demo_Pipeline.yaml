@@ -142,4 +142,34 @@ pipeline:
                         primary:
                           primaryArtifactRef: <+input>
                           sources: <+input>
+    - stage:
+        name: chained pipeline
+        identifier: chained_pipeline
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: Rohan_Sandbox
+          project: Rohan
+          inputs:
+            identifier: Rohan_Sandbox
+            stages:
+              - stage:
+                  identifier: Deploy
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceInputs:
+                        serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                            artifacts:
+                              primary:
+                                primaryArtifactRef: <+input>
+                                sources: <+input>
+                    environmentGroup:
+                      envGroupRef: <+input>
+                      deployToAll: <+input>
+                      environments: <+input>
+          outputs: []
   allowStageExecutions: true

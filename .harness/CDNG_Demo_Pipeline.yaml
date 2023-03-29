@@ -72,7 +72,9 @@ pipeline:
                     type: Kubernetes
                     spec:
                       artifacts:
-                        primary: {}
+                        primary:
+                          primaryArtifactRef: <+input>
+                          sources: <+input>
             metadata:
               parallel: false
         tags: {}

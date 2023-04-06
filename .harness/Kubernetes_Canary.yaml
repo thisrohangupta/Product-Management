@@ -1,0 +1,86 @@
+pipeline:
+  name: Kubernetes Canary
+  identifier: Kubernetes_Canary
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Canary Deployment
+        identifier: Canary_Deployment
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: <+input>
+            serviceInputs: <+input>
+          execution:
+            steps:
+              - stepGroup:
+                  name: Canary Deployment
+                  identifier: canaryDepoyment
+                  steps:
+                    - step:
+                        name: Canary Deployment
+                        identifier: canaryDeployment
+                        type: K8sCanaryDeploy
+                        timeout: 10m
+                        spec:
+                          instanceSelection:
+                            type: Count
+                            spec:
+                              count: 1
+                          skipDryRun: true
+                    - step:
+                        name: Canary Delete
+                        identifier: canaryDelete
+                        type: K8sCanaryDelete
+                        timeout: 10m
+                        spec: {}
+              - stepGroup:
+                  name: Primary Deployment
+                  identifier: primaryDepoyment
+                  steps:
+                    - step:
+                        name: Rolling Deployment
+                        identifier: rollingDeployment
+                        type: K8sRollingDeploy
+                        timeout: 10m
+                        spec:
+                          skipDryRun: true
+                          pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  name: Canary Delete
+                  identifier: rollbackCanaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  name: Rolling Rollback
+                  identifier: rollingRollback
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+          environments:
+            metadata:
+              parallel: true
+            values:
+              - environmentRef: staging
+                filters:
+                  - identifier: cd
+                    type: tags
+                    entities:
+                      - infrastructures
+                    spec:
+                      tags:
+                        team: cd
+                      matchType: all
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

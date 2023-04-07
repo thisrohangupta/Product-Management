@@ -13,20 +13,7 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: helloworldKustomize
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  manifests:
-                    - manifest:
-                        identifier: helloWorldKustomize
-                        type: Kustomize
-                        spec:
-                          store:
-                            type: Github
-                            spec:
-                              branch: <+input>
+            serviceRef: K8s
           execution:
             steps:
               - stepGroup:
@@ -89,32 +76,3 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
-    - stage:
-        name: Deploy to new cluster
-        identifier: Deploy_to_new_cluster
-        description: ""
-        type: Pipeline
-        spec:
-          org: default
-          pipeline: Golden_Pipeline
-          project: Rohan
-          inputs:
-            identifier: Golden_Pipeline
-            template:
-              templateInputs:
-                stages:
-                  - stage:
-                      identifier: Deploy
-                      template:
-                        templateInputs:
-                          type: Deployment
-                          spec:
-                            service:
-                              serviceRef: <+input>
-                              serviceInputs: <+input>
-                            environment:
-                              environmentRef: <+input>
-                              environmentInputs: <+input>
-                              infrastructureDefinitions: <+input>
-                          when:
-                            condition: <+input>

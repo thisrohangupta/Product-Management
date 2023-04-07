@@ -84,3 +84,32 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: Deploy to new cluster
+        identifier: Deploy_to_new_cluster
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: Golden_Pipeline
+          project: Rohan
+          inputs:
+            identifier: Golden_Pipeline
+            template:
+              templateInputs:
+                stages:
+                  - stage:
+                      identifier: Deploy
+                      template:
+                        templateInputs:
+                          type: Deployment
+                          spec:
+                            service:
+                              serviceRef: <+input>
+                              serviceInputs: <+input>
+                            environment:
+                              environmentRef: <+input>
+                              environmentInputs: <+input>
+                              infrastructureDefinitions: <+input>
+                          when:
+                            condition: <+input>

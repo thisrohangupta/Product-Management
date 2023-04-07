@@ -13,8 +13,20 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: <+input>
-            serviceInputs: <+input>
+            serviceRef: helloworldKustomize
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  manifests:
+                    - manifest:
+                        identifier: helloWorldKustomize
+                        type: Kustomize
+                        spec:
+                          store:
+                            type: Github
+                            spec:
+                              branch: <+input>
           execution:
             steps:
               - stepGroup:
@@ -50,6 +62,8 @@ pipeline:
                         spec:
                           skipDryRun: true
                           pruningEnabled: false
+                          commandFlags: []
+                        failureStrategies: []
             rollbackSteps:
               - step:
                   name: Canary Delete

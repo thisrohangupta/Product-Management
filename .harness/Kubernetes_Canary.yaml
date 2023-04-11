@@ -76,3 +76,20 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: dev
+        identifier: dev
+        template:
+          templateRef: Deploy_Stage_1
+          versionLabel: "1.01"
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+            variables:
+              - name: foo
+                type: String
+                default: dev
+                value: <+input>

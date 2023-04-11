@@ -92,4 +92,4 @@ pipeline:
               - name: foo
                 type: String
                 default: dev
-                value: <+input>
+                value: <+input>.allowedValues(rolling,canary,prod,dev)

@@ -47,6 +47,42 @@ pipeline:
                     skipDryRun: false
                     pruningEnabled: false
                   timeout: 10m
+              - step:
+                  type: Verify
+                  name: Verify_1
+                  identifier: Verify_1
+                  spec:
+                    isMultiServicesOrEnvs: true
+                    type: Auto
+                    monitoredService:
+                      type: Default
+                      spec: {}
+                    spec:
+                      sensitivity: HIGH
+                      duration: 5m
+                      deploymentTag: <+artifacts.primary.tag>
+                  timeout: 2h
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - Verification
+                        action:
+                          type: ManualIntervention
+                          spec:
+                            timeout: 2h
+                            onTimeout:
+                              action:
+                                type: StageRollback
+                    - onFailure:
+                        errors:
+                          - Unknown
+                        action:
+                          type: ManualIntervention
+                          spec:
+                            timeout: 2h
+                            onTimeout:
+                              action:
+                                type: Ignore
             rollbackSteps:
               - step:
                   name: Rolling Rollback

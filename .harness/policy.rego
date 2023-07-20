@@ -1,35 +1,20 @@
-package pipeline
+package namespace_validation
 
-# Deny pipelines that do not use allowed environments
-# NOTE: Try removing "test" from the 'allowed_environments' list to see the policy fail
+
 deny[msg] {
-	# Find all deployment stages
-	stage = input.pipeline.stages[_].stage
-	stage.type == "Deployment"
-
-	# ... where the environment is not in the allow list
-	not contains(allowed_environments, stage.spec.infrastructure.environment.identifier)
-
-	# Show a human-friendly error message
-	msg := sprintf("deployment stage '%s' cannot be deployed to environment '%s'", [stage.name, stage.spec.infrastructure.environment.identifier])
+    not contains(allowed, input.infrastructureNamespace)
+	msg := sprintf("Infrastructure namespace '%s' is not allowed", [input.infrastructureNamespace])
 }
 
-# Deny pipelines if the environment is missing completely
-deny[msg] {
-	# Find all deployment stages
-	stage = input.pipeline.stages[_].stage
-	stage.type == "Deployment"
-
-	# ... without an environment
-	not stage.spec.infrastructure.environment.identifier
-
-	# Show a human-friendly error message
-	msg := sprintf("deployment stage '%s' has no environment identifier", [stage.name])
+# Deny pipelines if the namespace is missing completely
+deny["No namespace defined for the infrastructure"] {
+	not input.infrastructureNamespace
 }
 
-# Environments that can be used for deployment
-allowed_environments = ["k8s-dev","k8s-prod"]
+# Namespaces that can be used for service
+## They want this to be an expression rather than hard coded into the policy, we do not evaluate expressions within the rego - thus enhancement
 
+allowed = ["dev", "default"] 
 contains(arr, elem) {
 	arr[_] = elem
 }

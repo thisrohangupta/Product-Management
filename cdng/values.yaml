@@ -19,5 +19,5 @@ serviceTargetPort: 80
 
 env:
   config:
-    environment: dev
+    environment: devRel
 

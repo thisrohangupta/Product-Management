@@ -52,6 +52,37 @@ pipeline:
                                       cd ${packerBaseDir}
                                       ${packerBin} init .
                         description: Initializing Packer Environment
+                    - step:
+                        type: Run
+                        name: Validating Packer Code
+                        identifier: Validating_Packer_Code
+                        spec:
+                          connectorRef: account.Rohan_Dockerhub
+                          image: packer
+                          shell: Sh
+                          command: |-
+                            cd ${packerBaseDir}
+                            ${packerBin} validate .
+                        description: Validating Packer Code
+                    - step:
+                        type: Run
+                        name: Building AMI
+                        identifier: Building_AMI
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: packer
+                          shell: Sh
+                          command: |
+                            cd ${packerBaseDir}
+                            ${packerBin} build .
+
+                            US_AMI = sh(script: "${toolsDir}/jq -r '.builds[-1].artifact_id' ${packerBaseDir}/packer-manifest.json | egrep -o 'us-west-2:ami-[0-9a-z]+' | cut -d ':' -f2", returnStdout:true).trim()
+                            AMI_ID = sh(script: "${toolsDir}/jq -r '.builds[-1].artifact_id' ${packerBaseDir}/packer-manifest.json", returnStdout: true).trim()
+                          outputVariables:
+                            - name: US_AMI
+                            - name: AMI_ID
+                        description: |
+                          Building AMI
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
@@ -76,6 +107,30 @@ pipeline:
                           type: Github
                       secretManagerRef: harnessSecretManager
                       skipRefreshCommand: false
+                  timeout: 10m
+              - step:
+                  type: HarnessApproval
+                  name: Approve
+                  identifier: Approve
+                  spec:
+                    approvalMessage: Please review the following information and approve the pipeline progression
+                    includePipelineExecutionHistory: true
+                    isAutoRejectEnabled: false
+                    approvers:
+                      userGroups:
+                        - account._account_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                    approverInputs: []
+                  timeout: 1d
+              - step:
+                  type: TerraformApply
+                  name: Terraform Apply
+                  identifier: Terraform_Apply
+                  spec:
+                    provisionerIdentifier: Infrastructure
+                    configuration:
+                      type: InheritFromPlan
                   timeout: 10m
         tags: {}
   notificationRules:

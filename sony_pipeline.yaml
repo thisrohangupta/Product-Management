@@ -1,0 +1,108 @@
+pipeline:
+  name: sony
+  identifier: sony
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Check Qualys maintenance
+        identifier: Check_Qualys_maintenance
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - stepGroup:
+                  name: Run Job
+                  identifier: Run_Job
+                  steps:
+                    - step:
+                        type: Run
+                        name: Print Message
+                        identifier: Print_Message
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: busybox
+                          shell: Sh
+                          command: |
+                            echo "Checking for Qualys maintenance..."
+                    - step:
+                        type: GitClone
+                        name: Download Python script
+                        identifier: Download_Python_script
+                        spec:
+                          connectorRef: ThisRohanGupta
+                          repoName: Product-Management
+                          cloneDirectory: /dev/script.py
+                          build:
+                            type: branch
+                            spec:
+                              branch: main
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: account.Harness_Kubernetes_Cluster
+                      namespace: dev
+              - step:
+                  type: TerraformPlan
+                  name: Terraform Plan
+                  identifier: Terraform_Plan
+                  spec:
+                    provisionerIdentifier: Infrastructure
+                    configuration:
+                      command: Apply
+                      configFiles:
+                        store:
+                          spec:
+                            connectorRef: ThisRohanGupta
+                            repoName: Terraform
+                            gitFetchType: Branch
+                            branch: main
+                            folderPath: /terraform/
+                          type: Github
+                      secretManagerRef: harnessSecretManager
+                      skipRefreshCommand: false
+                  timeout: 10m
+        tags: {}
+  notificationRules:
+    - name: Failure
+      identifier: Failure
+      pipelineEvents:
+        - type: PipelineFailed
+        - type: StageFailed
+          forStages:
+            - AllStages
+        - type: StepFailed
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true
+    - name: Success
+      identifier: Success
+      pipelineEvents:
+        - type: PipelineSuccess
+        - type: StageSuccess
+          forStages:
+            - AllStages
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true
+    - name: Job Start Slack Notification
+      identifier: Job_Start_Slack_Notification
+      pipelineEvents:
+        - type: PipelineStart
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true

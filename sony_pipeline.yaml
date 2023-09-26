@@ -132,6 +132,87 @@ pipeline:
                     configuration:
                       type: InheritFromPlan
                   timeout: 10m
+              - stepGroup:
+                  name: CIS Compliance
+                  identifier: CIS_Compliance
+                  steps:
+                    - step:
+                        type: Run
+                        name: Compliance
+                        identifier: Compliance
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: demo
+                          shell: Sh
+                          command: |-
+                            ssh -q -o StrictHostKeyChecking=no -i ${KEY} ubuntu@${INSTANCE_IP} uptime
+
+                            echo -e "session.1.type=ssh\nsession.1.host=${INSTANCE_IP}\nsession.1.user=ubuntu\nsession.1.identity=${KEY}\nsession.1.tmp=/var/tmp" >./sessions.properties
+                                        ${cisAssessorDir}https://protect-us.mimecast.com/s/cdQoCzpzWXUwPJmntgOKF1 -b ${cisAssessorDir}/benchmarks/CIS_Ubuntu_Linux_22.04_LTS_Benchmark_v1.0.0-xccdf.xml \
+                                        -html -p "Level 2 - Server" -sessions ./sessions.properties -q -rd .
+                    - step:
+                        type: Run
+                        name: VM Scan
+                        identifier: VM_Scan
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: qualys
+                          shell: Sh
+                          command: |
+                            qualysVulnerabilityAnalyzer apiServer: "${QualysWebsite}", credsId: "${QualysCredsId}", failBySev: "${QualysFailBySev}", bySev: "${QualysFailOnSev}", hostIp: "${INSTANCE_IP}", network: "${QualysNetwork}", optionProfile: "${QualysProfile}", platform: "${QualysPlatform}", pollingInterval: "${QualysInterval}", scanName: "${QualysScanName}", scannerName: "${QualysScannerName}", useHost: true, vulnsTimeout: "${QualysTimeout}"
+                        description: Qualys VM scan
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: account.Harness_Kubernetes_Cluster
+                      namespace: dev
+              - step:
+                  type: TerraformDestroy
+                  name: Destroy
+                  identifier: Destroy
+                  spec:
+                    provisionerIdentifier: Infrastructure
+                    configuration:
+                      type: InheritFromApply
+                  timeout: 10m
+              - stepGroup:
+                  name: Wrap Up
+                  identifier: Wrap_Up
+                  steps:
+                    - step:
+                        type: Run
+                        name: Share AMIs
+                        identifier: Share_AMIs
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: ansible
+                          shell: Sh
+                          command: |-
+                            ansiblePlaybook(
+                                      installation: 'ansible-2.11.12',
+                                      playbook: '${WORKSPACE}/ansible/share_amis.yml',
+                                      inventory: '${WORKSPACE}/ansible/inventory.ini',
+                                      extraVars: [
+                                        ami_ids: '${AMI_ID}',
+                                        enable_sharing: 'true'
+                                      ],
+                                      colorized: true)
+                        description: Share AMIs
+                    - step:
+                        type: Run
+                        name: AMI Retention
+                        identifier: AMI_Retention
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: ami
+                          shell: Sh
+                          command: /usr/local/bin/clean_amis.sh "${awscli}" "${regions}" "${image_name}" "${retention}"
+                        description: AMI Retention
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: account.Harness_Kubernetes_Cluster
+                      namespace: build
         tags: {}
   notificationRules:
     - name: Failure

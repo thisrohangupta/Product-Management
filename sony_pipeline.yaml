@@ -39,6 +39,19 @@ pipeline:
                             type: branch
                             spec:
                               branch: main
+                    - step:
+                        type: Run
+                        name: Initializing Packer Environment
+                        identifier: Initializing_Packer_Environment
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: packer
+                          shell: Sh
+                          command: |-
+                            find . -name 'packer-manifest.json' -ls -delete
+                                      cd ${packerBaseDir}
+                                      ${packerBin} init .
+                        description: Initializing Packer Environment
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:

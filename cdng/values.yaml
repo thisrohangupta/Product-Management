@@ -1,6 +1,6 @@
 name: <+service.name>
 replicas: 1
-image: latest
+image: library/nginx:latest
 
 # Namespace Configuration
 createNamespace: true

@@ -1,6 +1,6 @@
 name: <+service.name>
 replicas: 1
-image: <+artifact.image>
+image: latest
 
 # Namespace Configuration
 createNamespace: true

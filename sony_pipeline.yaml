@@ -1,5 +1,5 @@
 pipeline:
-  name: sony
+  name: Remote Pipeline Demo
   identifier: sony
   projectIdentifier: PM_Signoff
   orgIdentifier: default

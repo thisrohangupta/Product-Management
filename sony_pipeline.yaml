@@ -6,214 +6,63 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: Check Qualys maintenance
-        identifier: Check_Qualys_maintenance
+        name: Deploy
+        identifier: Deploy
         description: ""
-        type: Custom
+        type: Deployment
         spec:
+          deploymentType: NativeHelm
+          service:
+            serviceRef: helm
+            serviceInputs:
+              serviceDefinition:
+                type: NativeHelm
+                spec:
+                  manifests:
+                    - manifest:
+                        identifier: nginx
+                        type: HelmChart
+                        spec:
+                          store:
+                            type: OciHelmChart
+                            spec:
+                              config:
+                                type: Generic
+                                spec:
+                                  connectorRef: <+input>
+          environment:
+            environmentRef: k8sdev
+            deployToAll: false
+            infrastructureDefinitions: <+input>
           execution:
             steps:
-              - stepGroup:
-                  name: Run Job
-                  identifier: Run_Job
-                  steps:
-                    - step:
-                        type: Run
-                        name: Print Message
-                        identifier: Print_Message
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: busybox
-                          shell: Sh
-                          command: |
-                            echo "Checking for Qualys maintenance..."
-                    - step:
-                        type: GitClone
-                        name: Download Python script
-                        identifier: Download_Python_script
-                        spec:
-                          connectorRef: ThisRohanGupta
-                          repoName: Product-Management
-                          cloneDirectory: /dev/script.py
-                          build:
-                            type: branch
-                            spec:
-                              branch: main
-                    - step:
-                        type: Run
-                        name: Initializing Packer Environment
-                        identifier: Initializing_Packer_Environment
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: packer
-                          shell: Sh
-                          command: |-
-                            find . -name 'packer-manifest.json' -ls -delete
-                                      cd ${packerBaseDir}
-                                      ${packerBin} init .
-                        description: Initializing Packer Environment
-                    - step:
-                        type: Run
-                        name: Validating Packer Code
-                        identifier: Validating_Packer_Code
-                        spec:
-                          connectorRef: account.Rohan_Dockerhub
-                          image: packer
-                          shell: Sh
-                          command: |-
-                            cd ${packerBaseDir}
-                            ${packerBin} validate .
-                        description: Validating Packer Code
-                    - step:
-                        type: Run
-                        name: Building AMI
-                        identifier: Building_AMI
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: packer
-                          shell: Sh
-                          command: |
-                            cd ${packerBaseDir}
-                            ${packerBin} build .
-
-                            US_AMI = sh(script: "${toolsDir}/jq -r '.builds[-1].artifact_id' ${packerBaseDir}/packer-manifest.json | egrep -o 'us-west-2:ami-[0-9a-z]+' | cut -d ':' -f2", returnStdout:true).trim()
-                            AMI_ID = sh(script: "${toolsDir}/jq -r '.builds[-1].artifact_id' ${packerBaseDir}/packer-manifest.json", returnStdout: true).trim()
-                          outputVariables:
-                            - name: US_AMI
-                            - name: AMI_ID
-                        description: |
-                          Building AMI
-                  stepGroupInfra:
-                    type: KubernetesDirect
-                    spec:
-                      connectorRef: account.Harness_Kubernetes_Cluster
-                      namespace: dev
               - step:
-                  type: TerraformPlan
-                  name: Terraform Plan
-                  identifier: Terraform_Plan
-                  spec:
-                    provisionerIdentifier: Infrastructure
-                    configuration:
-                      command: Apply
-                      configFiles:
-                        store:
-                          spec:
-                            connectorRef: ThisRohanGupta
-                            repoName: Terraform
-                            gitFetchType: Branch
-                            branch: main
-                            folderPath: /terraform/
-                          type: Github
-                      secretManagerRef: harnessSecretManager
-                      skipRefreshCommand: false
+                  type: K8sDryRun
+                  name: Dry Run
+                  identifier: Dry_Run
+                  spec: {}
                   timeout: 10m
               - step:
-                  type: HarnessApproval
-                  name: Approve
-                  identifier: Approve
-                  spec:
-                    approvalMessage: Please review the following information and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    isAutoRejectEnabled: false
-                    approvers:
-                      userGroups:
-                        - account._account_all_users
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                    approverInputs: []
-                  timeout: 1d
-              - step:
-                  type: TerraformApply
-                  name: Terraform Apply
-                  identifier: Terraform_Apply
-                  spec:
-                    provisionerIdentifier: Infrastructure
-                    configuration:
-                      type: InheritFromPlan
+                  name: Helm Deployment
+                  identifier: helmDeployment
+                  type: HelmDeploy
                   timeout: 10m
-              - stepGroup:
-                  name: CIS Compliance
-                  identifier: CIS_Compliance
-                  steps:
-                    - step:
-                        type: Run
-                        name: Compliance
-                        identifier: Compliance
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: demo
-                          shell: Sh
-                          command: |-
-                            ssh -q -o StrictHostKeyChecking=no -i ${KEY} ubuntu@${INSTANCE_IP} uptime
-
-                            echo -e "session.1.type=ssh\nsession.1.host=${INSTANCE_IP}\nsession.1.user=ubuntu\nsession.1.identity=${KEY}\nsession.1.tmp=/var/tmp" >./sessions.properties
-                                        ${cisAssessorDir}https://protect-us.mimecast.com/s/cdQoCzpzWXUwPJmntgOKF1 -b ${cisAssessorDir}/benchmarks/CIS_Ubuntu_Linux_22.04_LTS_Benchmark_v1.0.0-xccdf.xml \
-                                        -html -p "Level 2 - Server" -sessions ./sessions.properties -q -rd .
-                    - step:
-                        type: Run
-                        name: VM Scan
-                        identifier: VM_Scan
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: qualys
-                          shell: Sh
-                          command: |
-                            qualysVulnerabilityAnalyzer apiServer: "${QualysWebsite}", credsId: "${QualysCredsId}", failBySev: "${QualysFailBySev}", bySev: "${QualysFailOnSev}", hostIp: "${INSTANCE_IP}", network: "${QualysNetwork}", optionProfile: "${QualysProfile}", platform: "${QualysPlatform}", pollingInterval: "${QualysInterval}", scanName: "${QualysScanName}", scannerName: "${QualysScannerName}", useHost: true, vulnsTimeout: "${QualysTimeout}"
-                        description: Qualys VM scan
-                  stepGroupInfra:
-                    type: KubernetesDirect
-                    spec:
-                      connectorRef: account.Harness_Kubernetes_Cluster
-                      namespace: dev
-              - step:
-                  type: TerraformDestroy
-                  name: Destroy
-                  identifier: Destroy
                   spec:
-                    provisionerIdentifier: Infrastructure
-                    configuration:
-                      type: InheritFromApply
+                    skipDryRun: false
+            rollbackSteps:
+              - step:
+                  name: Helm Rollback
+                  identifier: helmRollback
+                  type: HelmRollback
                   timeout: 10m
-              - stepGroup:
-                  name: Wrap Up
-                  identifier: Wrap_Up
-                  steps:
-                    - step:
-                        type: Run
-                        name: Share AMIs
-                        identifier: Share_AMIs
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: ansible
-                          shell: Sh
-                          command: |-
-                            ansiblePlaybook(
-                                      installation: 'ansible-2.11.12',
-                                      playbook: '${WORKSPACE}/ansible/share_amis.yml',
-                                      inventory: '${WORKSPACE}/ansible/inventory.ini',
-                                      extraVars: [
-                                        ami_ids: '${AMI_ID}',
-                                        enable_sharing: 'true'
-                                      ],
-                                      colorized: true)
-                        description: Share AMIs
-                    - step:
-                        type: Run
-                        name: AMI Retention
-                        identifier: AMI_Retention
-                        spec:
-                          connectorRef: account.harnessImage
-                          image: ami
-                          shell: Sh
-                          command: /usr/local/bin/clean_amis.sh "${awscli}" "${regions}" "${image_name}" "${retention}"
-                        description: AMI Retention
-                  stepGroupInfra:
-                    type: KubernetesDirect
-                    spec:
-                      connectorRef: account.Harness_Kubernetes_Cluster
-                      namespace: build
+                  spec: {}
         tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
   notificationRules:
     - name: Failure
       identifier: Failure

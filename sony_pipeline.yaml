@@ -14,22 +14,6 @@ pipeline:
           deploymentType: NativeHelm
           service:
             serviceRef: helm
-            serviceInputs:
-              serviceDefinition:
-                type: NativeHelm
-                spec:
-                  manifests:
-                    - manifest:
-                        identifier: nginx
-                        type: HelmChart
-                        spec:
-                          store:
-                            type: OciHelmChart
-                            spec:
-                              config:
-                                type: Generic
-                                spec:
-                                  connectorRef: <+input>
           environment:
             environmentRef: k8sdev
             deployToAll: false

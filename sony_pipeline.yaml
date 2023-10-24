@@ -33,7 +33,13 @@ pipeline:
           environment:
             environmentRef: k8sdev
             deployToAll: false
-            infrastructureDefinitions: <+input>
+            infrastructureDefinitions:
+              - identifier: helmdev
+                inputs:
+                  identifier: helmdev
+                  type: KubernetesDirect
+                  spec:
+                    namespace: dev
           execution:
             steps:
               - step:

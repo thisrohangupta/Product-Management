@@ -1,5 +1,4 @@
-## HPA 
-
+# harness.io/skip-file-for-deploy
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

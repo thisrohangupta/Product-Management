@@ -1,1 +1,2 @@
+name: dev-sample-app
 replica: <+serviceVariables.replica>

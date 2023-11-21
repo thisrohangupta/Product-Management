@@ -1,2 +1,0 @@
-name: prod-sample-app
-replica: <+serviceVariables.replica>

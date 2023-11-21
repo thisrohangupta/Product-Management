@@ -1,0 +1,28 @@
+## Deployment YAML
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-webapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-webapp
+  template:
+    metadata:
+      labels:
+        app: sample-webapp
+    spec:
+      containers:
+      - name: webapp
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 200m
+          limits:
+            cpu: 500m
+
+

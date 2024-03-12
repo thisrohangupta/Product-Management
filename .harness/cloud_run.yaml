@@ -3,3 +3,28 @@ service:
   identifier: cloud_run
   orgIdentifier: default
   projectIdentifier: PM_Signoff
+  serviceDefinition:
+    spec:
+      environmentType: GenTwo
+      manifests:
+        - manifest:
+            identifier: dev
+            type: GoogleCloudFunctionDefinition
+            spec:
+              store:
+                type: Harness
+                spec:
+                  files:
+                    - /cloudrun.yaml
+      artifacts:
+        primary:
+          primaryArtifactRef: <+input>
+          sources:
+            - spec:
+                connectorRef: <+input>
+                project: <+input>
+                bucket: <+input>
+                artifactPath: <+input>
+              identifier: devrun
+              type: GoogleCloudStorage
+    type: GoogleCloudFunctions

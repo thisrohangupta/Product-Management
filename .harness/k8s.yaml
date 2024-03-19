@@ -1,0 +1,5 @@
+service:
+  name: k8s
+  identifier: k8s
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff

@@ -1,0 +1,43 @@
+template:
+  name: Pre_validation
+  identifier: Pre_validation
+  versionLabel: "1.0"
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  spec:
+    timeout: 10m
+    type: ShellScript
+    spec:
+      shell: Bash
+      onDelegate: true
+      source:
+        type: Inline
+        spec:
+          script: |
+            aname=` echo "${workflow.variables.GIT_REPO}" |   cut -d- -f1` 
+
+            nam=$aname
+
+            check=`helm list -n $nam | grep -i deployed | awk '{print $9}' |  cut -d- -f4 `
+            echo $check
+
+            echo ${workflow.variables.previous_chart_version}
+
+
+            if [[   $check == ${workflow.variables.previous_chart_version} ]]; then
+                echo "version matched"
+            else
+                echo "version Mismatched"
+            fi
+            podcount=`kubectl get pod -n $nam  |  grep -v -i name | grep -v -i completed | grep -v 2/2 | wc -l`
+
+            if [[ $podcount == "0" ]]; then
+                echo "all pods are up and running"
+            fi
+      environmentVariables: []
+      outputVariables: []
+    when:
+      stageStatus: Success
+      condition: <+input>

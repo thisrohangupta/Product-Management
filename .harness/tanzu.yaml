@@ -1,0 +1,5 @@
+service:
+  name: tanzu
+  identifier: tanzu
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff

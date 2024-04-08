@@ -1,0 +1,22 @@
+pipeline:
+  name: Harness Pipeline Template
+  identifier: Harness_Pipeline_Template
+  tags: {}
+  template:
+    templateRef: account.Kubernetes_Canary_Deployment_1
+    versionLabel: "1.0"
+    templateInputs:
+      stages:
+        - stage:
+            identifier: Canary_Deployment
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default

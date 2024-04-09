@@ -19,6 +19,16 @@ service:
                   spec:
                     tag: <+input>
                     digest: <+input>
+            - name: nexus
+              identifier: nexus
+              template:
+                templateRef: Custom
+                versionLabel: "1.1"
+                templateInputs:
+                  type: CustomArtifact
+                  spec:
+                    version: <+input>
+                    delegateSelectors: <+input>
       manifests:
         - manifest:
             identifier: nginx

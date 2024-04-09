@@ -54,3 +54,13 @@ template:
                         lessThan: 0.25
                     metricType: Custom
                     metricName: datadog-cpu
+      changeSources:
+        - category: Deployment
+          type: HarnessCD
+          spec:
+            harnessApplicationId: H4t34v7JSgSDzl7FmyBWRA
+            harnessServiceId: NO1tR6E-RsuFAKY0wVi0qw
+            harnessEnvironmentId: ciIhF3JnSoS88Yfiqbf6BQ
+          enabled: true
+          name: Deployment Verification
+          identifier: Deployment_Verification

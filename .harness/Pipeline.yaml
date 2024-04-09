@@ -1,0 +1,39 @@
+pipeline:
+  name: Pipeline
+  identifier: Pipeline
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: ThisRohanGupta
+        repoName: Product-Management
+        build: <+input>
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s
+              namespace: dev
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: publish image
+                  identifier: publishImage
+                  spec:
+                    connectorRef: account.Rohan_Dockerhub
+                    repo: srgupta5328/demo
+                    tags:
+                      - lastest

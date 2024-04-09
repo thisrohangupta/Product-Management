@@ -15,8 +15,13 @@ pipeline:
                 serviceRef: <+input>
                 serviceInputs: <+input>
               environment:
-                environmentRef: <+input>
-                environmentInputs: <+input>
-                infrastructureDefinitions: <+input>
+                infrastructureDefinitions:
+                  - identifier: k8sdev1
+                    inputs:
+                      identifier: k8sdev1
+                      type: KubernetesDirect
+                      spec:
+                        connectorRef: <+input>
+                        namespace: <+input>
   projectIdentifier: PM_Signoff
   orgIdentifier: default

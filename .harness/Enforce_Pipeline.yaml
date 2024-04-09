@@ -28,6 +28,17 @@ pipeline:
                     outputVariables: []
                   timeout: 10m
         tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: ManualIntervention
+                spec:
+                  timeout: 10m
+                  onTimeout:
+                    action:
+                      type: Ignore
     - stage:
         name: approve
         identifier: approve

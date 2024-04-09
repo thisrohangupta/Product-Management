@@ -29,6 +29,31 @@ pipeline:
                   - name: teamName
                     type: String
                     value: <+input>.allowedValues(deployment,pipeline,platform,ci,ffm)
+        - stage:
+            identifier: Deploy_Prod
+            type: Deployment
+            spec:
+              execution:
+                steps:
+                  - step:
+                      identifier: Verify
+                      type: Verify
+                      spec:
+                        type: Rolling
+                        monitoredService:
+                          type: Template
+                          spec:
+                            templateInputs:
+                              type: Application
+                              sources:
+                                healthSources:
+                                  - identifier: datadogdev
+                                    type: DatadogMetrics
+                                    spec:
+                                      connectorRef: <+input>
+                                      metricDefinitions:
+                                        - identifier: datadog-cpu
+                                          query: <+input>
       variables:
         - name: skip
           type: String

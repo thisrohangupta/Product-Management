@@ -31,7 +31,7 @@ pipeline:
                     source:
                       type: Inline
                       spec:
-                        script: exit 1
+                        script: exit 0
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
@@ -46,7 +46,7 @@ pipeline:
                     source:
                       type: Inline
                       spec:
-                        script: echo "hello"
+                        script: echo "hello from deploy stage 1"
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
@@ -56,11 +56,57 @@ pipeline:
               errors:
                 - AllErrors
               action:
-                type: ManualIntervention
-                spec:
-                  onTimeout:
-                    action:
-                      type: StageRollback
-                  timeout: 10m
+                type: PipelineRollback
         when:
           pipelineStatus: Success
+    - stage:
+        name: Deploy 2
+        identifier: Deploy_2
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            useFromStage:
+              stage: deploy
+          environment:
+            useFromStage:
+              stage: deploy
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: fail
+                  identifier: fail
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: exit 1
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  type: ShellScript
+                  name: rollback
+                  identifier: rollback
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "Rollback Stage Deploy 2"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

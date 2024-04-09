@@ -56,7 +56,7 @@ pipeline:
               errors:
                 - AllErrors
               action:
-                type: PipelineRollback
+                type: StageRollback
         when:
           pipelineStatus: Success
     - stage:
@@ -109,4 +109,4 @@ pipeline:
               errors:
                 - AllErrors
               action:
-                type: StageRollback
+                type: PipelineRollback

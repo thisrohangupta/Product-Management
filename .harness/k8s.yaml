@@ -6,29 +6,7 @@ service:
   serviceDefinition:
     spec:
       artifacts:
-        primary:
-          primaryArtifactRef: <+input>
-          sources:
-            - name: nginx
-              identifier: nginx
-              template:
-                templateRef: artifact
-                versionLabel: "1.0"
-                templateInputs:
-                  type: DockerRegistry
-                  spec:
-                    tag: <+input>
-                    digest: <+input>
-            - name: nexus
-              identifier: nexus
-              template:
-                templateRef: Custom
-                versionLabel: "1.1"
-                templateInputs:
-                  type: CustomArtifact
-                  spec:
-                    version: <+input>
-                    delegateSelectors: <+input>
+        primary: {}
       manifests:
         - manifest:
             identifier: nginx

@@ -54,6 +54,8 @@ pipeline:
                     isAutoRejectEnabled: false
                     approverInputs: []
         tags: {}
+        when:
+          pipelineStatus: Success
     - stage:
         name: deploy
         identifier: deploy

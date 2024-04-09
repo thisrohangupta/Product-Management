@@ -9,24 +9,26 @@ pipeline:
       stages:
         - stage:
             identifier: Canary_Deployment
-            type: Deployment
-            spec:
-              service:
-                serviceRef: <+input>
-                serviceInputs: <+input>
-              environment:
-                infrastructureDefinitions:
-                  - identifier: k8sdev1
-                    inputs:
-                      identifier: k8sdev1
-                      type: KubernetesDirect
-                      spec:
-                        connectorRef: <+input>
-                        namespace: <+input>
-            variables:
-              - name: teamName
-                type: String
-                value: <+input>.allowedValues(deployment,pipeline,platform,ci,ffm)
+            template:
+              templateInputs:
+                type: Deployment
+                spec:
+                  service:
+                    serviceRef: <+input>
+                    serviceInputs: <+input>
+                  environment:
+                    infrastructureDefinitions:
+                      - identifier: k8sdev1
+                        inputs:
+                          identifier: k8sdev1
+                          type: KubernetesDirect
+                          spec:
+                            connectorRef: <+input>
+                            namespace: <+input>
+                variables:
+                  - name: teamName
+                    type: String
+                    value: <+input>.allowedValues(deployment,pipeline,platform,ci,ffm)
       variables:
         - name: skip
           type: String

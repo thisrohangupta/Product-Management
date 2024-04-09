@@ -107,4 +107,4 @@ pipeline:
               action:
                 type: StageRollback
         when:
-          pipelineStatus: All
+          pipelineStatus: Success

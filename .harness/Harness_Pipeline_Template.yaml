@@ -23,6 +23,10 @@ pipeline:
                       spec:
                         connectorRef: <+input>
                         namespace: <+input>
+            variables:
+              - name: teamName
+                type: String
+                value: <+input>.allowedValues(deployment,pipeline,platform,ci,ffm)
       variables:
         - name: skip
           type: String

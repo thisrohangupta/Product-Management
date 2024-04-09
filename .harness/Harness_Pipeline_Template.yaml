@@ -23,5 +23,12 @@ pipeline:
                       spec:
                         connectorRef: <+input>
                         namespace: <+input>
+      variables:
+        - name: skip
+          type: String
+          value: <+input>.default(false).allowedValues(false,true)
+        - name: deploySecret
+          type: Secret
+          value: <+input>
   projectIdentifier: PM_Signoff
   orgIdentifier: default

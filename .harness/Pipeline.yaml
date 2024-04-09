@@ -29,11 +29,9 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: BuildAndPushDockerRegistry
                   name: publish image
                   identifier: publishImage
-                  spec:
-                    connectorRef: account.Rohan_Dockerhub
-                    repo: srgupta5328/demo
-                    tags:
-                      - lastest
+                  template:
+                    templateRef: publish_image
+                    versionLabel: "1.0"
+                    gitBranch: main

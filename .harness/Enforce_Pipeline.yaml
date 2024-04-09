@@ -56,6 +56,11 @@ pipeline:
               errors:
                 - AllErrors
               action:
-                type: StageRollback
+                type: ManualIntervention
+                spec:
+                  onTimeout:
+                    action:
+                      type: StageRollback
+                  timeout: 10m
         when:
           pipelineStatus: Success

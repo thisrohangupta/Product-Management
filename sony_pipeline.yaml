@@ -53,6 +53,35 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: ci
+        identifier: ci
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: <+input>
+              namespace: <+input>
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: GitClone
+                  name: GitClone_1
+                  identifier: GitClone_1
+                  spec:
+                    connectorRef: <+input>.allowedValues(ThisRohanGupta,account.Test_Github,account.Rohan_Github,account.Test123,account.ThisRohanGupta)
+                    repoName: <+input>
+                    cloneDirectory: <+input>
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
   notificationRules:
     - name: Failure
       identifier: Failure
@@ -94,3 +123,9 @@ pipeline:
             - account._account_all_users
           webhookUrl: ""
       enabled: true
+  properties:
+    ci:
+      codebase:
+        connectorRef: <+input>
+        repoName: <+input>
+        build: <+input>

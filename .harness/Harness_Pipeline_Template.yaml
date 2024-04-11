@@ -33,27 +33,11 @@ pipeline:
             identifier: Deploy_Prod
             type: Deployment
             spec:
-              execution:
-                steps:
-                  - step:
-                      identifier: Verify
-                      type: Verify
-                      spec:
-                        type: Rolling
-                        monitoredService:
-                          type: Template
-                          spec:
-                            templateInputs:
-                              type: Application
-                              sources:
-                                healthSources:
-                                  - identifier: datadogdev
-                                    type: DatadogMetrics
-                                    spec:
-                                      connectorRef: <+input>
-                                      metricDefinitions:
-                                        - identifier: datadog-cpu
-                                          query: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                serviceOverrideInputs: <+input>
+                infrastructureDefinitions: <+input>
       variables:
         - name: skip
           type: String

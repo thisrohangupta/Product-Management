@@ -27,18 +27,19 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: K8sDryRun
-                  name: Dry Run
-                  identifier: Dry_Run
-                  spec: {}
-                  timeout: 10m
-              - step:
-                  name: Helm Deployment
-                  identifier: helmDeployment
-                  type: HelmDeploy
-                  timeout: 10m
+                  type: ShellScript
+                  name: echo
+                  identifier: echo
                   spec:
-                    skipDryRun: false
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "Hello"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
             rollbackSteps:
               - step:
                   name: Helm Rollback

@@ -97,6 +97,6 @@ pipeline:
   properties:
     ci:
       codebase:
-        connectorRef: <+input>
-        repoName: <+input>
+        connectorRef: ThisRohanGupta
+        repoName: Product-Management
         build: <+input>

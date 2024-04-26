@@ -53,7 +53,7 @@ pipeline:
               errors:
                 - AllErrors
               action:
-                type: StageRollback
+                type: MarkAsFailure
   notificationRules:
     - name: Failure
       identifier: Failure

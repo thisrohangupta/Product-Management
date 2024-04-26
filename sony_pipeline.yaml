@@ -14,6 +14,14 @@ pipeline:
           deploymentType: NativeHelm
           service:
             serviceRef: helm
+            serviceInputs:
+              serviceDefinition:
+                type: NativeHelm
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
           environment:
             environmentRef: k8sdev
             deployToAll: false

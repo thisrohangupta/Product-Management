@@ -40,5 +40,11 @@ template:
             type: StageRollback
     when:
       pipelineStatus: Success
+    variables:
+      - name: User
+        type: String
+        description: User who owns the template
+        required: false
+        value: Rohan
   identifier: Deployment
   versionLabel: "1"

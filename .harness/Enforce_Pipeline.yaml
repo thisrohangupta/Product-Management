@@ -1,0 +1,112 @@
+pipeline:
+  name: Enforce Pipeline
+  identifier: Enforce_Pipeline
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: deploy
+        identifier: deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: k8s
+          environment:
+            environmentRef: k8sdev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: playground
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: test
+                  identifier: test
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: exit 0
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  type: ShellScript
+                  name: hello
+                  identifier: hello
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "hello from deploy stage 1"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+        when:
+          pipelineStatus: Success
+    - stage:
+        name: Deploy 2
+        identifier: Deploy_2
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            useFromStage:
+              stage: deploy
+          environment:
+            useFromStage:
+              stage: deploy
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: fail
+                  identifier: fail
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: exit 1
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  type: ShellScript
+                  name: rollback
+                  identifier: rollback
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "Rollback Stage Deploy 2"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: PipelineRollback

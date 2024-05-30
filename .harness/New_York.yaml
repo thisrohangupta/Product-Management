@@ -1,0 +1,18 @@
+pipeline:
+  name: New York
+  identifier: New_York
+  template:
+    templateRef: End_2_End_Pipeline_Template
+    versionLabel: 0.0.1
+    templateInputs:
+      stages:
+        - stage:
+            identifier: Dev
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+  tags: {}
+  projectIdentifier: Rohan
+  orgIdentifier: default

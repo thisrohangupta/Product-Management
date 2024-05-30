@@ -1,0 +1,66 @@
+template:
+  name: Datadog
+  identifier: Datadog
+  versionLabel: "1.0"
+  type: MonitoredService
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  spec:
+    serviceRef: kubernetes
+    environmentRef: k8sdev
+    type: Application
+    sources:
+      healthSources:
+        - type: DatadogMetrics
+          identifier: datadogdev
+          name: datadog-dev
+          spec:
+            connectorRef: <+input>
+            feature: Datadog Cloud Metrics
+            metricDefinitions:
+              - identifier: datadog-cpu
+                dashboardName: app-infra
+                metricPath: datadog-cpu
+                metricName: datadog-cpu
+                metric: ""
+                metricTags:
+                  - ""
+                isManualQuery: true
+                isCustomCreatedMetric: true
+                query: <+input>
+                sli:
+                  enabled: false
+                analysis:
+                  riskProfile:
+                    riskCategory: Errors
+                    thresholdTypes:
+                      - ACT_WHEN_HIGHER
+                  liveMonitoring:
+                    enabled: false
+                  deploymentVerification:
+                    enabled: true
+                    serviceInstanceFieldName: host
+            metricPacks:
+              - identifier: Custom
+                metricThresholds:
+                  - type: IgnoreThreshold
+                    spec:
+                      action: Ignore
+                    criteria:
+                      type: Absolute
+                      spec:
+                        greaterThan: 1
+                        lessThan: 0.25
+                    metricType: Custom
+                    metricName: datadog-cpu
+      changeSources:
+        - category: Deployment
+          type: HarnessCD
+          spec:
+            harnessApplicationId: H4t34v7JSgSDzl7FmyBWRA
+            harnessServiceId: NO1tR6E-RsuFAKY0wVi0qw
+            harnessEnvironmentId: ciIhF3JnSoS88Yfiqbf6BQ
+          enabled: true
+          name: Deployment Verification
+          identifier: Deployment_Verification

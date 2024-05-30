@@ -1,0 +1,25 @@
+inputSet:
+  pipeline:
+    identifier: CDNG_Demo_Pipeline
+    stages:
+      - stage:
+          identifier: Deploy_to_Dev
+          type: Deployment
+          spec:
+            service:
+              serviceInputs:
+                serviceDefinition:
+                  type: Kubernetes
+                  spec:
+                    artifacts:
+                      primary:
+                        primaryArtifactRef: dev
+                        sources:
+                          - identifier: dev
+                            type: DockerRegistry
+                            spec:
+                              tag: stable-perl
+  name: SampleDemo
+  identifier: SampleDemo
+  orgIdentifier: default
+  projectIdentifier: Rohan

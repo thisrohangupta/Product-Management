@@ -8,7 +8,8 @@ template:
     spec:
       deploymentType: Kubernetes
       service:
-        serviceRef: k8s
+        serviceRef: <+input>
+        serviceInputs: <+input>
       environment:
         environmentRef: k8sdev
         deployToAll: false

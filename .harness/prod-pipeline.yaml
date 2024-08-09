@@ -3,7 +3,8 @@ pipeline:
   identifier: prod
   projectIdentifier: PM_Signoff
   orgIdentifier: default
-  tags: {}
+  tags:
+    prod: ""
   stages:
     - stage:
         name: prod only

@@ -17,10 +17,11 @@ pipeline:
             serviceRef: <+input>
             serviceInputs: <+input>
           environment:
-            environmentRef: k8sprod
+            environmentRef: <+input>
             deployToAll: false
-            infrastructureDefinitions:
-              - identifier: prod
+            environmentInputs: <+input>
+            serviceOverrideInputs: <+input>
+            infrastructureDefinitions: <+input>
           execution:
             steps:
               - step:

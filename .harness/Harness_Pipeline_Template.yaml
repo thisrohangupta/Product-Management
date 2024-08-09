@@ -1,0 +1,49 @@
+pipeline:
+  name: Harness Pipeline Template
+  identifier: Harness_Pipeline_Template
+  tags: {}
+  template:
+    templateRef: account.Kubernetes_Canary_Deployment_1
+    versionLabel: "1.0"
+    templateInputs:
+      stages:
+        - stage:
+            identifier: Canary_Deployment
+            template:
+              templateInputs:
+                type: Deployment
+                spec:
+                  service:
+                    serviceRef: <+input>
+                    serviceInputs: <+input>
+                  environment:
+                    infrastructureDefinitions:
+                      - identifier: k8sdev1
+                        inputs:
+                          identifier: k8sdev1
+                          type: KubernetesDirect
+                          spec:
+                            connectorRef: <+input>
+                            namespace: <+input>
+                variables:
+                  - name: teamName
+                    type: String
+                    value: <+input>.allowedValues(deployment,pipeline,platform,ci,ffm)
+        - stage:
+            identifier: Deploy_Prod
+            type: Deployment
+            spec:
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                serviceOverrideInputs: <+input>
+                infrastructureDefinitions: <+input>
+      variables:
+        - name: skip
+          type: String
+          value: <+input>.default(false).allowedValues(false,true)
+        - name: deploySecret
+          type: Secret
+          value: <+input>
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default

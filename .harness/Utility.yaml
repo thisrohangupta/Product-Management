@@ -1,0 +1,135 @@
+pipeline:
+  name: Utility
+  identifier: Utility
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: PRE-PROCESS
+        identifier: PREPROCESS
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: kubernetes
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: dev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: devk8s
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: PRE-PROCESS
+                  identifier: PREPROCESS
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "sa"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps: []
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+    - stage:
+        name: golden
+        identifier: golden
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: Golden
+          project: PM_Signoff
+          inputs:
+            identifier: Golden
+            stages:
+              - stage:
+                  identifier: Dev
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: kubernetes
+                      serviceInputs:
+                        serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                            artifacts:
+                              primary:
+                                primaryArtifactRef: ""
+                                sources: <+input>
+    - stage:
+        name: non prod
+        identifier: any_env
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: prod
+          project: PM_Signoff
+          inputs:
+            identifier: prod
+            stages:
+              - stage:
+                  identifier: prod_only
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: <+input>
+                      serviceInputs: <+input>
+                    environment:
+                      environmentRef: <+input>
+                      environmentInputs: <+input>
+                      serviceOverrideInputs: <+input>
+                      infrastructureDefinitions: <+input>
+        tags: {}
+    - stage:
+        name: prod-only
+        identifier: prodonly
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: prod
+          project: PM_Signoff
+          inputs:
+            identifier: prod
+            stages:
+              - stage:
+                  identifier: prod_only
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: <+input>
+                      serviceInputs: <+input>
+                    environment:
+                      environmentRef: <+input>
+                      environmentInputs: <+input>
+                      serviceOverrideInputs: <+input>
+                      infrastructureDefinitions: <+input>
+  allowStageExecutions: true
+  variables:
+    - name: RELEASE-TYPE
+      type: String
+      description: ""
+      required: false
+      value: <+input>.allowedValues(BIG-BANG,BOTH,BG)

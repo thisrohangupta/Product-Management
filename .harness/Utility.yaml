@@ -1,0 +1,46 @@
+pipeline:
+  name: Utility
+  identifier: Utility
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: golden
+        identifier: golden
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: Golden
+          project: PM_Signoff
+          inputs:
+            identifier: Golden
+            stages:
+              - stage:
+                  identifier: Dev
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: <+input>
+                      serviceInputs: <+input>
+    - stage:
+        name: any env
+        identifier: any_env
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: prod
+          project: PM_Signoff
+          inputs:
+            identifier: prod
+            stages:
+              - stage:
+                  identifier: prod_only
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: <+input>
+                      serviceInputs: <+input>
+  allowStageExecutions: true

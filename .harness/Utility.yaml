@@ -76,6 +76,7 @@ pipeline:
                             artifacts:
                               primary:
                                 primaryArtifactRef: ""
+                                sources: <+input>
     - stage:
         name: non prod
         identifier: any_env

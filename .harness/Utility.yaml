@@ -6,6 +6,52 @@ pipeline:
   tags: {}
   stages:
     - stage:
+        name: PRE-PROCESS
+        identifier: PREPROCESS
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: kubernetes
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: dev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: devk8s
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: PRE-PROCESS
+                  identifier: PREPROCESS
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "sa"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps: []
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+    - stage:
         name: golden
         identifier: golden
         description: ""
@@ -22,8 +68,14 @@ pipeline:
                   type: Deployment
                   spec:
                     service:
-                      serviceRef: <+input>
-                      serviceInputs: <+input>
+                      serviceRef: kubernetes
+                      serviceInputs:
+                        serviceDefinition:
+                          type: Kubernetes
+                          spec:
+                            artifacts:
+                              primary:
+                                primaryArtifactRef: ""
     - stage:
         name: non prod
         identifier: any_env
@@ -74,3 +126,9 @@ pipeline:
                       serviceOverrideInputs: <+input>
                       infrastructureDefinitions: <+input>
   allowStageExecutions: true
+  variables:
+    - name: RELEASE-TYPE
+      type: String
+      description: ""
+      required: false
+      value: <+input>.allowedValues(BIG-BANG,BOTH,BG)

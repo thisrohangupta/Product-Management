@@ -41,12 +41,12 @@ pipeline:
             type: String
             description: ""
             required: false
-            value: <+input>
+            value: <+input>.allowedValues(name1,name2,name3)
           - name: approver_id
             type: String
             description: ""
             required: false
-            value: <+input>
+            value: <+input>.allowedValues(id1,id2,id3)
           - name: test
             type: String
             description: ""

@@ -43,6 +43,11 @@ pipeline:
                     service:
                       serviceRef: <+input>
                       serviceInputs: <+input>
+                    environment:
+                      environmentRef: <+input>
+                      environmentInputs: <+input>
+                      serviceOverrideInputs: <+input>
+                      infrastructureDefinitions: <+input>
         tags: {}
     - stage:
         name: prod-only

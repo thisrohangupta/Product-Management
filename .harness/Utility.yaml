@@ -25,7 +25,7 @@ pipeline:
                       serviceRef: <+input>
                       serviceInputs: <+input>
     - stage:
-        name: any env
+        name: non prod
         identifier: any_env
         description: ""
         type: Pipeline
@@ -43,4 +43,29 @@ pipeline:
                     service:
                       serviceRef: <+input>
                       serviceInputs: <+input>
+        tags: {}
+    - stage:
+        name: prod-only
+        identifier: prodonly
+        description: ""
+        type: Pipeline
+        spec:
+          org: default
+          pipeline: prod
+          project: PM_Signoff
+          inputs:
+            identifier: prod
+            stages:
+              - stage:
+                  identifier: prod_only
+                  type: Deployment
+                  spec:
+                    service:
+                      serviceRef: <+input>
+                      serviceInputs: <+input>
+                    environment:
+                      environmentRef: <+input>
+                      environmentInputs: <+input>
+                      serviceOverrideInputs: <+input>
+                      infrastructureDefinitions: <+input>
   allowStageExecutions: true

@@ -3,7 +3,8 @@ pipeline:
   identifier: Golden
   projectIdentifier: PM_Signoff
   orgIdentifier: default
-  tags: {}
+  tags:
+    golden: ""
   stages:
     - stage:
         name: Dev

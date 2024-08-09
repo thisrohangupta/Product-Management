@@ -16,12 +16,6 @@ pipeline:
           service:
             serviceRef: <+input>
             serviceInputs: <+input>
-          environment:
-            environmentRef: <+input>
-            deployToAll: false
-            environmentInputs: <+input>
-            serviceOverrideInputs: <+input>
-            infrastructureDefinitions: <+input>
           execution:
             steps:
               - step:
@@ -40,6 +34,12 @@ pipeline:
                   timeout: 10m
                   spec:
                     pruningEnabled: false
+          environmentGroup:
+            envGroupRef: nonprod
+            metadata:
+              parallel: false
+            deployToAll: <+input>
+            environments: <+input>
         tags: {}
         failureStrategies:
           - onFailure:

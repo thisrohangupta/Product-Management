@@ -30,11 +30,11 @@ pipeline:
                     isAutoRejectEnabled: false
                     approverInputs:
                       - name: Name
-                        defaultValue: <+input>..executionInput()
+                        defaultValue: <+input>.executionInput()
                       - name: ID
-                        defaultValue: <+input>..executionInput()
+                        defaultValue: <+input>.executionInput()
                       - name: Test
-                        defaultValue: <+input>..executionInput()
+                        defaultValue: <+input>.executionInput()
         tags: {}
         variables:
           - name: name

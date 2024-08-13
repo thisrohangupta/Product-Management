@@ -3,3 +3,20 @@ service:
   identifier: gcf2
   orgIdentifier: default
   projectIdentifier: PM_Signoff
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: ProductManagement
+            type: AwsSamDirectory
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: <+input>
+                  gitFetchType: Branch
+                  paths:
+                    - /cd/azure/dev.zip
+                  repoName: Azure-Function
+                  branch: main
+    type: AWS_SAM

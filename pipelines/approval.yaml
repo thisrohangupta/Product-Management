@@ -6,49 +6,50 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: Approval
-        identifier: Approval
+        name: Deploy
+        identifier: Deploy
         description: ""
-        type: Approval
+        type: Deployment
         spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: kubernetes
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: <+input>
+            deployToAll: false
+            environmentInputs: <+input>
+            serviceOverrideInputs: <+input>
+            infrastructureDefinitions: <+input>
           execution:
             steps:
               - step:
-                  name: Harness Approval
-                  identifier: Harness_Approval
-                  type: HarnessApproval
-                  timeout: 1d
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
                   spec:
-                    approvalMessage: |-
-                      Please review the following information
-                      and approve the pipeline progression
-                    includePipelineExecutionHistory: true
-                    approvers:
-                      minimumCount: 1
-                      disallowPipelineExecutor: false
-                      userGroups: <+input>
-                    isAutoRejectEnabled: false
-                    approverInputs:
-                      - name: Name
-                        defaultValue: <+input>.allowedValues("name1","name2").executionInput()
-                      - name: ID
-                        defaultValue: <+input>.allowedValues("name1","name2").executionInput()
-                      - name: Test
-                        defaultValue: <+input>.allowedValues("name1","name2").executionInput()
+                    skipDryRun: false
+                    pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
         tags: {}
-        variables:
-          - name: name
-            type: String
-            description: ""
-            required: false
-            value: <+input>.allowedValues(name1,name2,name3)
-          - name: approver_id
-            type: String
-            description: ""
-            required: false
-            value: <+input>.allowedValues(id1,id2,id3)
-          - name: test
-            type: String
-            description: ""
-            required: false
-            value: <+input>
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

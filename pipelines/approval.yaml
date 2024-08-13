@@ -30,11 +30,11 @@ pipeline:
                     isAutoRejectEnabled: false
                     approverInputs:
                       - name: Name
-                        defaultValue: <+input>.executionInput()
+                        defaultValue: <+input>.executionInput().allowedValues("name1","name2")
                       - name: ID
-                        defaultValue: <+input>.executionInput()
+                        defaultValue: <+input>.executionInput().allowedValues("name1","name2")
                       - name: Test
-                        defaultValue: <+input>.executionInput()
+                        defaultValue: <+input>.executionInput().allowedValues("name1","name2")
         tags: {}
         variables:
           - name: name

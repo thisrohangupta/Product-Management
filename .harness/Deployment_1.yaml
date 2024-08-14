@@ -39,8 +39,7 @@ template:
             - AllErrors
           action:
             type: StageRollback
-    when:
-      pipelineStatus: Success
+    when: <+input>
     variables:
       - name: User
         type: String

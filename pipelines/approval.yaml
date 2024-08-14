@@ -53,3 +53,16 @@ pipeline:
                 - AllErrors
               action:
                 type: StageRollback
+    - stage:
+        name: dev
+        identifier: dev
+        tags: {}
+        template:
+          templateRef: Deployment
+          versionLabel: "1"
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>

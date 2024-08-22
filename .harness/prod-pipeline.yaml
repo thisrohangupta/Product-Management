@@ -42,9 +42,9 @@ pipeline:
                       type: Inline
                       spec:
                         script: |+
-                          echo <+infra.connector.name>
-                          echo <infra.connector.region>
-                          echo <+stage.spec.deploymentType>
+                          echo "connector name" <+infra.connector.name>
+                          echo "region" <infra.connector.region>
+                          echo "deployment type" <+stage.spec.deploymentType>
 
                     environmentVariables: []
                     outputVariables: []

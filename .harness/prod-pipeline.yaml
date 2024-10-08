@@ -27,8 +27,18 @@ pipeline:
                           type: DockerRegistry
                           spec:
                             imagePath: library/nginx
-                            digest: <+input>
                             tag: stable-perl
+                            digest: <+input>
+                  variables:
+                    - name: token
+                      type: String
+                      value: <+input>
+                    - name: password
+                      type: Secret
+                      value: <+input>
+                    - name: cpu
+                      type: Number
+                      value: <+input>
           execution:
             steps:
               - step:

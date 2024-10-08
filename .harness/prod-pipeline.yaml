@@ -9,74 +9,34 @@ pipeline:
     - stage:
         name: prod only
         identifier: prod_only
-        description: ""
-        type: Deployment
-        spec:
-          deploymentType: Kubernetes
-          service:
-            serviceRef: kubernetes
-            serviceInputs:
-              serviceDefinition:
-                type: Kubernetes
-                spec:
-                  artifacts:
-                    primary:
-                      primaryArtifactRef: prod
-                      sources:
-                        - identifier: prod
-                          type: DockerRegistry
-                          spec:
-                            imagePath: library/nginx
-                            tag: stable-perl
-                            digest: <+input>
-                  variables:
-                    - name: token
-                      type: String
-                      value: <+input>
-                    - name: password
-                      type: Secret
-                      value: <+input>
-                    - name: cpu
-                      type: Number
-                      value: <+input>
-          execution:
-            steps:
-              - step:
-                  type: ShellScript
-                  name: ShellScript_1
-                  identifier: ShellScript_1
-                  spec:
-                    shell: Bash
-                    executionTarget: {}
-                    source:
-                      type: Inline
-                      spec:
-                        script: |+
-                          echo "connector name" <+infra.connector.name>
-
-                          echo "deployment type" <+stage.spec.deploymentType>
-
-                    environmentVariables: []
-                    outputVariables: []
-                  timeout: 10m
-            rollbackSteps:
-              - step:
-                  name: Rollback Rollout Deployment
-                  identifier: rollbackRolloutDeployment
-                  type: K8sRollingRollback
-                  timeout: 10m
-                  spec:
-                    pruningEnabled: false
-          environment:
-            environmentRef: k8sprod
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: prod
         tags: {}
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
+        template:
+          templateRef: demo1
+          versionLabel: "1.0"
+          gitBranch: main
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          sources:
+                            - identifier: prod
+                              type: DockerRegistry
+                              spec:
+                                digest: <+input>
+                      variables:
+                        - name: token
+                          type: String
+                          value: <+input>
+                        - name: password
+                          type: Secret
+                          value: <+input>
+                        - name: cpu
+                          type: Number
+                          value: <+input>
   allowStageExecutions: true

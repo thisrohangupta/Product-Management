@@ -24,14 +24,8 @@ template:
                           connectorRef: <+input>
               artifacts:
                 primary:
-                  primaryArtifactRef: prod
-                  sources:
-                    - identifier: prod
-                      type: DockerRegistry
-                      spec:
-                        imagePath: library/nginx
-                        tag: stable-perl
-                        digest: <+input>
+                  primaryArtifactRef: <+input>
+                  sources: <+input>
               variables:
                 - name: token
                   type: String

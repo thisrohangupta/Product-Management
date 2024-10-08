@@ -13,6 +13,15 @@ template:
           serviceDefinition:
             type: Kubernetes
             spec:
+              manifests:
+                - manifest:
+                    identifier: k8s_example
+                    type: K8sManifest
+                    spec:
+                      store:
+                        type: Github
+                        spec:
+                          connectorRef: <+input>
               artifacts:
                 primary:
                   primaryArtifactRef: prod

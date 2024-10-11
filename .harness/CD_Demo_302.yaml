@@ -1,7 +1,7 @@
 template:
     name: CD Demo
     identifier: CD_Demo
-    versionLabel: 3.0.2
+    versionLabel: 3.0.3
     type: Stage
     projectIdentifier: Continuous_Deployment_Product_Team
     orgIdentifier: Product_Management_Design

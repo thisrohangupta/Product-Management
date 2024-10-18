@@ -1,0 +1,26 @@
+pipeline:
+  name: email
+  identifier: email
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: email
+        identifier: email
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Email
+                  name: Email_1
+                  identifier: Email_1
+                  spec:
+                    to: nofar@harness.io
+                    cc: rohan@harness.io
+                    subject: Happy Friday from Harness!
+                    body: Pipeline Execution <+pipeline.name>
+                  timeout: 10m
+        tags: {}

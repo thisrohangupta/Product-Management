@@ -1,0 +1,35 @@
+pipeline:
+  name: Approval
+  identifier: Approval
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: approve
+        identifier: approve
+        description: ""
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: rohan
+                  identifier: rohan
+                  type: HarnessApproval
+                  timeout: 1d
+                  spec:
+                    approvalMessage: |-
+                      Please review the following information
+                      and approve the pipeline progression
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                      userGroups:
+                        - account.ProductManagement
+                    isAutoRejectEnabled: false
+                    approverInputs:
+                      - name: name
+                        defaultValue: <+input>
+        tags: {}

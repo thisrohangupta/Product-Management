@@ -6,25 +6,76 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: custom
-        identifier: custom
+        name: deploy
+        identifier: deploy
         description: ""
-        type: Custom
+        type: Deployment
         spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: <+input>
+            serviceInputs: <+input>
+          environmentGroup:
+            envGroupRef: dev
+            metadata:
+              parallel: <+input>
+            deployToAll: false
+            environments:
+              - environmentRef: ecs
+                deployToAll: true
+                infrastructureDefinitions: <+input>
+              - environmentRef: k8sdev
+                deployToAll: false
+                infrastructureDefinitions:
+                  - identifier: eks
+                    inputs:
+                      identifier: eks
+                      type: KubernetesAws
+                      spec:
+                        connectorRef: <+input>
+                        cluster: <+input>
+                        namespace: <+input>
+                        releaseName: <+input>
+                        region: <+input>
+                      allowSimultaneousDeployments: <+input>
+                  - identifier: devrancher1
+                    inputs:
+                      identifier: devrancher1
+                      type: KubernetesRancher
+                      spec:
+                        connectorRef: <+input>
+                        cluster: <+input>
+                        namespace: <+input>
+                  - identifier: oicdaws
+                    inputs:
+                      identifier: oicdaws
+                      type: KubernetesAws
+                      spec:
+                        provisioner: <+input>
+                  - identifier: qa
           execution:
             steps:
               - step:
-                  type: ShellScript
-                  name: ShellScript_1
-                  identifier: ShellScript_1
+                  type: K8sRollingDeploy
+                  name: K8sRollingDeploy_1
+                  identifier: K8sRollingDeploy_1
                   spec:
-                    shell: Bash
-                    executionTarget: {}
-                    source:
-                      type: Inline
-                      spec:
-                        script: echo "Hello World"
-                    environmentVariables: []
-                    outputVariables: []
+                    skipDryRun: false
+                    pruningEnabled: false
                   timeout: 10m
+            rollbackSteps: []
         tags: {}
+        when:
+          pipelineStatus: Success
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+  variables:
+    - name: name
+      type: String
+      description: a persons name
+      required: false
+      value: <+input>.default(test)

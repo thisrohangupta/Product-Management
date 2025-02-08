@@ -1,0 +1,25 @@
+template:
+  name: Step Group Template
+  identifier: Step_Group_Template
+  versionLabel: "1.0"
+  type: StepGroup
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  spec:
+    stageType: Deployment
+    steps:
+      - step:
+          type: ShellScript
+          name: hello
+          identifier: hello
+          spec:
+            shell: Bash
+            onDelegate: true
+            source:
+              type: Inline
+              spec:
+                script: echo "Hello"
+            environmentVariables: []
+            outputVariables: []
+          timeout: 10m

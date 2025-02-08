@@ -1,0 +1,14 @@
+template:
+  name: Kubernetes Rolling Deploy
+  identifier: Kubernetes_Rolling_Deploy
+  versionLabel: "1.0"
+  type: Step
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  spec:
+    type: K8sRollingDeploy
+    timeout: 10m
+    spec:
+      skipDryRun: false
+      pruningEnabled: false

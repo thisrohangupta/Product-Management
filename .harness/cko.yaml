@@ -12,32 +12,90 @@ pipeline:
         type: Deployment
         spec:
           deploymentType: Kubernetes
+          gitOpsEnabled: true
           service:
             serviceRef: <+input>
             serviceInputs: <+input>
-          environment:
-            environmentRef: dev
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: devk8s
           execution:
             steps:
               - step:
-                  name: Rollout Deployment
-                  identifier: rolloutDeployment
-                  type: K8sRollingDeploy
+                  type: GitOpsUpdateReleaseRepo
+                  name: Update Release Repo
+                  identifier: updateReleaseRepo
                   timeout: 10m
-                  spec:
-                    skipDryRun: false
-                    pruningEnabled: false
-            rollbackSteps:
+                  spec: {}
               - step:
-                  name: Rollback Rollout Deployment
-                  identifier: rollbackRolloutDeployment
-                  type: K8sRollingRollback
-                  timeout: 10m
+                  type: MergePR
+                  name: Merge PR
+                  identifier: mergePR
                   spec:
-                    pruningEnabled: false
+                    deleteSourceBranch: true
+                  timeout: 10m
+              - step:
+                  type: GitOpsFetchLinkedApps
+                  name: Fetch Linked Apps
+                  identifier: fetchLinkedApps
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  type: GitOpsGetAppDetails
+                  name: GitOpsGetAppDetails_1
+                  identifier: GitOpsGetAppDetails_1
+                  spec:
+                    hardRefresh: false
+                    applicationRegex: <+input>
+                  timeout: 10m
+              - step:
+                  type: GitOpsSync
+                  name: GitOpsSync_1
+                  identifier: GitOpsSync_1
+                  spec:
+                    prune: true
+                    dryRun: true
+                    applyOnly: true
+                    forceApply: true
+                    applicationsList: []
+                    retryStrategy:
+                      limit: 2
+                      baseBackoffDuration: 5s
+                      increaseBackoffByFactor: 2
+                      maxBackoffDuration: 3m5s
+                    retry: true
+                    syncOptions:
+                      skipSchemaValidation: true
+                      autoCreateNamespace: true
+                      pruneResourcesAtLast: false
+                      applyOutOfSyncOnly: true
+                      replaceResources: true
+                      prunePropagationPolicy: foreground
+                    showResourceProgress: true
+                  timeout: 10m
+              - step:
+                  type: RevertPR
+                  name: RevertPR_1
+                  identifier: RevertPR_1
+                  spec:
+                    commitId: 1341daq3
+                    disableGitRestraint: <+input>
+                    prTitle: <+input>
+                  timeout: 10m
+              - step:
+                  type: UpdateGitOpsApp
+                  name: UpdateGitOpsApp_1
+                  identifier: UpdateGitOpsApp_1
+                  spec:
+                    applicationName: <+input>
+                    agentId: <+input>
+                    targetRevision: <+input>
+                    helm: <+input>
+                    kustomize: <+input>
+                  timeout: 10m
+            rollbackSteps: []
+          environment:
+            environmentRef: <+input>
+            deployToAll: <+input>
+            environmentInputs: <+input>
+            gitOpsClusters: <+input>
         tags: {}
         failureStrategies:
           - onFailure:

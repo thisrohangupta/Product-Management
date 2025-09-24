@@ -170,3 +170,7 @@ kubectl delete -f /workspace/k8s/microservice-demo.yaml
 # Job
 kubectl delete -f /workspace/jobs/pi.yaml
 ```
+
+## Maintainer
+
+Rohan Gupta

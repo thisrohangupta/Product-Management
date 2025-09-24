@@ -173,4 +173,4 @@ kubectl delete -f /workspace/jobs/pi.yaml
 
 ## Maintainer
 
-Rohan Gupta
+Rohan Gupta (Team: ACM)

@@ -174,3 +174,7 @@ kubectl delete -f /workspace/jobs/pi.yaml
 ## Maintainer
 
 Rohan Gupta (Team: ACM)
+
+## Contributors
+
+- Rohan Gupta (Team: ACM)

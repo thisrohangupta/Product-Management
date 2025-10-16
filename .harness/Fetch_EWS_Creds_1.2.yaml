@@ -1,0 +1,55 @@
+template:
+  name: Fetch_EWS_Creds
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    type: ShellScript
+    spec:
+      shell: Bash
+      onDelegate: true
+      source:
+        type: Inline
+        spec:
+          script: |-
+            if [  $env == 'int' ]; then
+            EWS_USER1=${secrets.getValue("win-ews-int-user")}
+            EWS_PWD1=${secrets.getValue("win-ews-int-password")}
+            echo ${EWS_USER1}
+            echo ${EWS_PWD1}
+            else 
+            if [  $env == 'perf' ]; then
+            EWS_USER1=${secrets.getValue("win-ews-perf-user")}
+            EWS_PWD1=${secrets.getValue("win-ews-perf-password")}
+            echo ${EWS_USER1}
+            echo ${EWS_PWD1}
+            elif  [  $env == 'stage' ]; then
+            EWS_USER1=${secrets.getValue("win-ews-stage-user")}
+            EWS_PWD=${secrets.getValue("win-ews-stage-password")}
+            echo ${EWS_USER1}
+            echo ${EWS_PWD1}
+
+            elif  [  $env == 'prod' ]; then 
+            EWS_USER1=${secrets.getValue("win-ews-prod-user")}
+            EWS_PWD1=${secrets.getValue("win-ews-prod-password")}
+            echo ${EWS_USER1}
+            echo ${EWS_PWD1}
+            fi 
+            fi 
+
+            export  EWS_USER=${EWS_USER1}
+            export  EWS_PWD=${EWS_PWD1}
+      environmentVariables: []
+      outputVariables:
+        - name: EWS_USER
+          type: Secret
+          value: EWS_USER
+        - name: EWS_PWD
+          type: Secret
+          value: EWS_PWD
+    timeout: 10m
+    when:
+      stageStatus: Success
+      condition: <+input>
+  identifier: Fetch_EWS_Creds
+  versionLabel: "1.2"

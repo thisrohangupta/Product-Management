@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_Product_Management_1760649657681-push-trigger-input-set
+  identifier: Build_Product_Management_1760649657681pushtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: dev2
+  pipeline:
+    identifier: Build_Product_Management_1760649657681
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>

@@ -1,0 +1,19 @@
+I can generate that, but I need a few details first. Please provide the following (or tell me to use sensible defaults):
+
+- Harness platform: NG (NextGen) or CG (Classic)?
+- Pipeline name and identifier
+- Project and Org identifiers (or say default)
+- Type: CI pipeline, CD pipeline, or a combined CI → CD pipeline?
+- Trigger: manual, Git webhook (branch), schedule — if Git, provide repo, branch, connector identifier
+- Build: tool (Maven, Gradle, npm, Docker build), artifact type (Docker image, NPM package, JAR), Docker registry connector id (if Docker), build commands
+- Tests: unit/tests steps required?
+- Artifact storage: Harness Artifact server, Docker registry, S3, Nexus — connector id and image name/group/artifact id
+- Environments: names, environment type (K8s, SSH, ECS), cluster/connector ids, namespace, target infra details
+- Deployment strategy: rolling, blue-green, canary, basic SSH copy
+- Approval: manual or automated approvals required? approver IDs or user groups
+- Variables, secrets, and secret manager connector id (Vault, Harness secrets)
+- Notifications (Slack/email) and their connector ids
+- Timeout for pipeline or stages
+- Any specific steps (helm deploy with values, kubectl apply, terraform plan/apply)
+
+If you prefer, say “use defaults” and I’ll create a typical NG pipeline: CI builds a Docker image from Git repo on commits to main, pushes to Docker registry, then CD deploys to a Kubernetes namespace with a rolling update and a manual approval before production.

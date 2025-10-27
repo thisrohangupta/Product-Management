@@ -1,0 +1,232 @@
+pipeline:
+  name: nodejs-k8s-cd-pipeline
+  identifier: nodejs_k8s_cd_pipeline
+  projectIdentifier: devops
+  orgIdentifier: default
+  tags: {}
+  inputSetReferences: []
+  variables: []
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: VM
+            spec:
+              connectorRef: account.github
+              os: Linux
+              shell: Sh
+              delegateSelectors:
+                - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Install Dependencies
+                  identifier: install_deps
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Installing dependencies..."
+                      npm ci
+              - step:
+                  name: Run Unit Tests
+                  identifier: run_unit_tests
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Running unit tests..."
+                      npm test
+              - step:
+                  name: Build Application
+                  identifier: build_app
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Building application..."
+                      npm run build
+              - step:
+                  name: Package Artifact
+                  identifier: package_artifact
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Packaging artifact for deployment..."
+                      mkdir -p out
+                      cp -r dist/* out/
+              - step:
+                  name: Save Build Metadata
+                  identifier: save_build_meta
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Recording build metadata..."
+                      echo "IMAGE_TAG=$(git rev-parse --short HEAD)" > build_meta.env
+                    outputs:
+                      artifacts:
+                        - artifactPath: build_meta.env
+                          artifactName: build_meta
+    - stage:
+        name: Deploy to Kubernetes (Blue/Green with Verification)
+        identifier: Deploy
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: nodejs_service
+          environment:
+            environmentRef: dev
+          infrastructure:
+            environmentRef: dev
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Pre-Deployment Approval
+                  identifier: pre_deploy_approval
+                  type: Approval
+                  spec:
+                    approvalMessage: "Approve deployment to dev namespace"
+                    includePipelineExecutionHistory: true
+                    minimumCount: 1
+                    approvers:
+                      userGroups:
+                        - userGroupRef: devops
+              - step:
+                  name: Blue/Green Deploy
+                  identifier: k8s_blue_green_deploy
+                  type: K8sBlueGreenDeploy
+                  spec:
+                    skipDryRun: false
+                    prunedNamespaces: []
+              - step:
+                  name: Wait for Stabilization
+                  identifier: wait_stabilize
+                  type: Wait
+                  spec:
+                    duration: 2m
+              - step:
+                  name: Health Check (HTTP)
+                  identifier: http_health_check
+                  type: Http
+                  spec:
+                    url: http://my-app.default.svc.cluster.local/health
+                    method: GET
+                    headerSpecifications: []
+                    requestBody: ''
+                    responseAssertions:
+                      - responseCode: 200
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Post-Deploy Manual Approval (Promote)
+                  identifier: post_deploy_approval
+                  type: Approval
+                  spec:
+                    approvalMessage: "Promote blue/green deployment to active - approve to complete swap"
+                    includePipelineExecutionHistory: true
+                    minimumCount: 1
+                    approvers:
+                      userGroups:
+                        - userGroupRef: release-managers
+              - step:
+                  name: Swap Services (Blue/Green Complete)
+                  identifier: k8s_bg_swap
+                  type: K8sBGSwapServices
+                  spec: {}
+              - step:
+                  name: Post-Deployment Verification
+                  identifier: post_deploy_verify
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Running post-deployment verification checks..."
+                      STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://my-app.default.svc.cluster.local/health)
+                      if [ "$STATUS" -ne 200 ]; then
+                        echo "Health check failed with status $STATUS"
+                        exit 1
+                      fi
+                      echo "Application healthy (status $STATUS)"
+    - stage:
+        name: Canary Rollback Guard & Notification
+        identifier: Rollback_Guard
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: nodejs_service
+          environment:
+            environmentRef: dev
+          infrastructure:
+            environmentRef: dev
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Automated Verification (synthetic)
+                  identifier: automated_verification
+                  type: Verify
+                  spec:
+                    type: SLM
+                    spec: {}
+              - step:
+                  name: Conditional Rollback (on failure)
+                  identifier: conditional_rollback
+                  type: Run
+                  when:
+                    stageStatus:
+                      onFailure: true
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -e
+                      echo "Detected failure in verification - initiating rollback..."
+                      kubectl rollout undo deployment/my-app -n default
+              - step:
+                  name: Notify Slack (Post-Deployment)
+                  identifier: notify_slack
+                  type: ShellScript
+                  spec:
+                    shell: Sh
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          echo "Sending notification to Slack channel #deployments"
+                          # This uses a webhook URL stored in secret manager (least-privilege)
+                          SLACK_WEBHOOK="<+secrets.getValue(\"account.slack.webhook\")>"
+                          PAYLOAD="{\"text\":\"Deployment completed for nodejs-k8s-cd-pipeline to dev. Review status in Harness.\"}"
+                          curl -s -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK"
+  notifications: {}
+  tags: {}
+  governanceMetadata: {}
+  properties: {}

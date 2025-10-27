@@ -1,0 +1,21 @@
+template:
+  name: Post Validation
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    type: ShellScript
+    spec:
+      shell: Bash
+      onDelegate: true
+      source:
+        type: Inline
+        spec:
+          script: "aname=` echo \"${workflow.variables.GIT_REPO}\" |   cut -d- -f1` \n\nnam=$aname\necho $nam \nvslist=$(kubectl get vs -n ${nam} | sed  '1d' | awk {'print $1'})\n\nfor vs in $vslist\ndo \n       echo ${vs}\n\n       canaryhostcount=$(kubectl get vs ${vs} -n ${nam} -o json | jq -r '.spec.http[].route[].destination.host'|grep -i -e \"-canary.\"| wc -l)\n       \n\n       if [[ $canaryhostcount -gt 0 ]]; then\n              echo \"$vs  is a Canary Virtual Service\"\n              #Make sure first hostname does not contain canary\n                hostcount=0\n                #totalcount=0\n              \trwcount=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http' | jq length )\n                #echo $rwcount\n              \tfor (( rw=0; rw<$rwcount; rw++ ))\n\t\t\t\tdo\n\t\t\t\t         testhostname=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http['$rw'].route['$rw'].destination.host')\n\t\t\t\t         echo $testhostname\n\t\t\t\t         if [[  \"$testhostname\" != *\"canary\"* ]]; then\n\t\t\t\t              weight=$(kubectl get vs ${vs} -n ${nam} -o json | jq '.spec.http['$rw'].route['$rw'].weight')\n\t\t\t\t                if [[ $weight == \"100\" ]]; then\n                                                    echo \"Primary weight matched\"\n                                                else\n                                                     echo \" Weight mismatched for this service ${vs}\"\n                                                     exit\n                                                 fi\n\t\t\t\t         fi\n\t\t\t\tdone\n\n       else\n       \t\techo \"******** $vs  is not a Canary enabled Virtual Service **********\"\n       fi\n\ndone\n\n\ncheck=`helm list -n $nam | grep -i deployed | awk '{print $9}' |  cut -d- -f4 `\necho $check\n\necho ${context.chart.CHART_VERSION} \n\n\n#if [[   $check == ${context.chart.CHART_VERSION}  ]]; then\n#    echo \"version matched\"\n#fi"
+      environmentVariables: []
+      outputVariables: []
+    timeout: 10m
+    when:
+      stageStatus: Success
+  identifier: Post_Validation
+  versionLabel: "1.0"

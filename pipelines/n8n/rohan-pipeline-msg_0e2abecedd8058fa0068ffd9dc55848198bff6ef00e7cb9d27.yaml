@@ -1,0 +1,135 @@
+pipeline:
+  name: Example CI-CD Pipeline
+  identifier: example_ci_cd_pipeline
+  projectIdentifier: sample_project
+  orgIdentifier: sample_org
+  tags: {}
+  variables:
+    - name: repoUrl
+      type: String
+      value: https://git.example.com/my-repo.git
+    - name: imageName
+      type: String
+      value: my-app
+    - name: dockerTag
+      type: String
+      value: latest
+  stages:
+    - stage:
+        name: Build and Push
+        identifier: Build_and_Push
+        type: CI
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Clone Repository
+                  identifier: Clone_Repository
+                  spec:
+                    image: alpine/git:latest
+                    shell: Bash
+                    connectorRef: git_connector
+                    command: |
+                      set -e
+                      git clone ${repoUrl} .
+              - step:
+                  type: Run
+                  name: Install Dependencies
+                  identifier: Install_Dependencies
+                  spec:
+                    image: node:18
+                    shell: Bash
+                    command: |
+                      set -e
+                      npm ci
+              - step:
+                  type: Run
+                  name: Run Unit Tests
+                  identifier: Run_Unit_Tests
+                  spec:
+                    image: node:18
+                    shell: Bash
+                    command: |
+                      set -e
+                      npm test
+              - step:
+                  type: Run
+                  name: Build Docker Image
+                  identifier: Build_Docker_Image
+                  spec:
+                    image: docker:24-dind
+                    shell: Bash
+                    privileged: true
+                    command: |
+                      set -e
+                      docker build -t ${imageName}:${dockerTag} .
+              - step:
+                  type: Run
+                  name: Push Docker Image
+                  identifier: Push_Docker_Image
+                  spec:
+                    image: docker:24
+                    shell: Bash
+                    connectorRef: docker_registry_connector
+                    command: |
+                      set -e
+                      echo "${DOCKER_REGISTRY_PASSWORD}" | docker login -u "${DOCKER_REGISTRY_USER}" --password-stdin ${DOCKER_REGISTRY_HOST}
+                      docker tag ${imageName}:${dockerTag} ${DOCKER_REGISTRY_HOST}/${imageName}:${dockerTag}
+                      docker push ${DOCKER_REGISTRY_HOST}/${imageName}:${dockerTag}
+    - stage:
+        name: Deploy to Kubernetes
+        identifier: Deploy_to_K8s
+        type: Deployment
+        spec:
+          serviceConfig:
+            serviceRef: my-service
+            serviceDefinition:
+              type: Kubernetes
+              spec:
+                artifacts:
+                  primary:
+                    type: DockerRegistry
+                    spec:
+                      connectorRef: docker_registry_connector
+                      imagePath: ${imageName}
+                      tag: ${dockerTag}
+                manifests:
+                  - manifest:
+                      identifier: K8s_Manifest
+                      type: K8sManifest
+                      spec:
+                        store:
+                          type: Git
+                          spec:
+                            connectorRef: git_connector
+                            repoName: manifest-repo
+                            branch: main
+                            paths:
+                              - kubernetes/deployment.yaml
+          infrastructure:
+            environmentRef: dev
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: k8s_connector
+                namespace: default
+                releaseName: my-app-release
+          execution:
+            steps:
+              - step:
+                  type: K8sRollingDeploy
+                  name: K8s Rolling Deploy
+                  identifier: K8s_Rolling_Deploy
+                  spec:
+                    skipDryRun: false
+                    forceApply: false
+                    prune: true
+              - step:
+                  type: K8sResize
+                  name: Scale Application
+                  identifier: K8s_Scale
+                  spec:
+                    replicas: 3
+  notifications: {}
+  failureStrategies: {}

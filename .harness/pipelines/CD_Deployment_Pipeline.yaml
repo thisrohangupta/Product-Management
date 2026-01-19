@@ -1,0 +1,208 @@
+pipeline:
+  name: "CD Deployment Pipeline"
+  identifier: "CD_Deployment_Pipeline"
+  projectIdentifier: "Rohan"
+  orgIdentifier: "default"
+  tags: {}
+  stages:
+  - stage:
+      name: "CD Deploy"
+      identifier: "CD_Deploy"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "Kubernetes"
+        environment:
+          environmentRef: "staging"
+          deployToAll: false
+          infrastructureDefinitions:
+          - identifier: "productstaging"
+        execution:
+          steps:
+          - step:
+              name: "Rollout Deployment"
+              identifier: "rolloutDeployment"
+              type: "K8sRollingDeploy"
+              timeout: "10m"
+              spec:
+                skipDryRun: false
+                pruningEnabled: false
+          rollbackSteps:
+          - step:
+              name: "Rollback Rollout Deployment"
+              identifier: "rollbackRolloutDeployment"
+              type: "K8sRollingRollback"
+              timeout: "10m"
+              spec:
+                pruningEnabled: false
+        services:
+          values:
+          - serviceRef: "portal"
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "<+input>"
+          - serviceRef: "bitnami"
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  manifests:
+                  - manifest:
+                      identifier: "dev"
+                      type: "HelmChart"
+                      spec:
+                        chartVersion: "<+input>"
+          - serviceRef: "kustomize"
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      type: "DockerRegistry"
+                      spec:
+                        tag: "<+input>"
+          - serviceRef: "helloworldKustomize"
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  manifests:
+                  - manifest:
+                      identifier: "helloWorldKustomize"
+                      type: "Kustomize"
+                      spec:
+                        store:
+                          type: "Github"
+                          spec:
+                            branch: "<+input>"
+          metadata:
+            parallel: false
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"
+  - stage:
+      name: "Approve to Prod"
+      identifier: "Approve_to_Prod"
+      description: ""
+      type: "Approval"
+      spec:
+        execution:
+          steps:
+          - step:
+              name: "Approval"
+              identifier: "Approval"
+              type: "HarnessApproval"
+              timeout: "1d"
+              spec:
+                approvalMessage: "Please review the following information\nand approve\
+                  \ the pipeline progression"
+                includePipelineExecutionHistory: true
+                approvers:
+                  minimumCount: 1
+                  disallowPipelineExecutor: false
+                  userGroups:
+                  - "account.ProductManagement"
+                approverInputs: []
+      tags: {}
+  - stage:
+      name: "Prod Deploy"
+      identifier: "Prod_Deploy"
+      description: ""
+      type: "Deployment"
+      spec:
+        deploymentType: "Kubernetes"
+        service:
+          useFromStage:
+            stage: "CD_Deploy"
+        environment:
+          environmentRef: "staging"
+          deployToAll: false
+          infrastructureDefinitions:
+          - identifier: "productstaging"
+        execution:
+          steps:
+          - stepGroup:
+              name: "Canary Deployment"
+              identifier: "canaryDepoyment"
+              steps:
+              - step:
+                  name: "Canary Deployment"
+                  identifier: "canaryDeployment"
+                  type: "K8sCanaryDeploy"
+                  timeout: "10m"
+                  spec:
+                    instanceSelection:
+                      type: "Count"
+                      spec:
+                        count: 1
+                    skipDryRun: false
+              - step:
+                  name: "Canary Delete"
+                  identifier: "canaryDelete"
+                  type: "K8sCanaryDelete"
+                  timeout: "10m"
+                  spec: {}
+          - stepGroup:
+              name: "Primary Deployment"
+              identifier: "primaryDepoyment"
+              steps:
+              - step:
+                  name: "Rolling Deployment"
+                  identifier: "rollingDeployment"
+                  type: "K8sRollingDeploy"
+                  timeout: "10m"
+                  spec:
+                    skipDryRun: false
+          rollbackSteps:
+          - step:
+              name: "Canary Delete"
+              identifier: "rollbackCanaryDelete"
+              type: "K8sCanaryDelete"
+              timeout: "10m"
+              spec: {}
+          - step:
+              name: "Rolling Rollback"
+              identifier: "rollingRollback"
+              type: "K8sRollingRollback"
+              timeout: "10m"
+              spec: {}
+      tags: {}
+      failureStrategies:
+      - onFailure:
+          errors:
+          - "AllErrors"
+          action:
+            type: "StageRollback"
+  - stage:
+      name: "test"
+      identifier: "test"
+      description: ""
+      type: "FeatureFlag"
+      spec:
+        execution:
+          steps:
+          - step:
+              type: "FlagConfiguration"
+              name: "test"
+              identifier: "test"
+              spec:
+                feature: "testing"
+                environment: "TestCiscoPlusEnv"
+                instructions:
+                - identifier: "SetDefaultVariationsIdentifier"
+                  type: "SetDefaultVariations"
+                  spec:
+                    "on": "true"
+                    "off": "false"
+              timeout: "10m"

@@ -1,0 +1,53 @@
+---
+pipeline:
+  projectIdentifier: "PM_Signoff"
+  orgIdentifier: "default"
+  tags: {}
+  notificationRules:
+  - name: "Job Start Pipeline Notification"
+    identifier: "Job_Start_Pipeline_Notification"
+    pipelineEvents:
+    - type: "PipelineStart"
+    notificationMethod:
+      type: "Slack"
+      spec:
+        userGroups:
+        - "account._account_all_users"
+        webhookUrl: ""
+    enabled: true
+  stages:
+  - stage:
+      name: "Check Qualys Maintenance"
+      identifier: "Check_Qualys_Maintenance"
+      description: ""
+      type: "Custom"
+      spec:
+        execution:
+          steps:
+          - stepGroup:
+              name: "Check Qualys maintenance"
+              identifier: "Check_Qualys_maintenance"
+              steps:
+              - step:
+                  type: "GitClone"
+                  name: "Clone Python Script"
+                  identifier: "Clone_Python_Script"
+                  spec:
+                    connectorRef: "ThisRohanGupta"
+                    repoName: "PRoduct-Management"
+                    cloneDirectory: "/infrastructure/"
+                    build:
+                      type: "branch"
+                      spec:
+                        branch: "main"
+                  description: "Cloning"
+              stepGroupInfra:
+                type: "KubernetesDirect"
+                spec:
+                  connectorRef: "account.Harness_Kubernetes_Cluster"
+                  namespace: "build"
+          rollbackSteps: []
+        serviceDependencies: []
+      tags: {}
+  identifier: "Sony_Pipeline_Clone"
+  name: "Sony Pipeline - Clone"

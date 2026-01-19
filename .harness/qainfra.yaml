@@ -1,0 +1,13 @@
+infrastructureDefinition:
+  name: qa-infra
+  identifier: qainfra
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff
+  environmentRef: stage
+  deploymentType: Kubernetes
+  type: KubernetesDirect
+  spec:
+    connectorRef: account.Harness_Kubernetes_Cluster
+    namespace: qa
+    releaseName: release-<+INFRA_KEY_SHORT_ID>
+  allowSimultaneousDeployments: false

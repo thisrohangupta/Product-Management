@@ -1,0 +1,128 @@
+pipeline:
+  name: prod
+  identifier: prod
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags:
+    prod: ""
+  stages:
+    - stage:
+        name: prod only
+        identifier: prod_only
+        tags: {}
+        template:
+          templateRef: demo1
+          versionLabel: "1.0"
+          gitBranch: main
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      manifests:
+                        - manifest:
+                            identifier: k8s_example
+                            type: K8sManifest
+                            spec:
+                              store:
+                                type: Github
+                                spec:
+                                  connectorRef: <+input>
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: <+input>
+                          sources:
+                            - identifier: prod
+                              type: DockerRegistry
+                              spec:
+                                digest: <+input>
+                      variables:
+                        - name: token
+                          type: String
+                          value: <+input>
+                        - name: password
+                          type: Secret
+                          value: <+input>
+                        - name: cpu
+                          type: Number
+                          value: <+input>
+    - stage:
+        name: canary
+        identifier: canary
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: <+input>
+            serviceInputs: <+input>
+          environment:
+            environmentRef: <+input>
+            deployToAll: false
+            environmentInputs: <+input>
+            serviceOverrideInputs: <+input>
+            infrastructureDefinitions: <+input>
+          execution:
+            steps:
+              - stepGroup:
+                  name: Canary Deployment
+                  identifier: canaryDeployment
+                  steps:
+                    - step:
+                        name: Canary Deployment
+                        identifier: canaryDeployment
+                        type: K8sCanaryDeploy
+                        timeout: 10m
+                        spec:
+                          instanceSelection:
+                            type: Count
+                            spec:
+                              count: 1
+                          skipDryRun: false
+                    - step:
+                        name: Canary Delete
+                        identifier: canaryDelete
+                        type: K8sCanaryDelete
+                        timeout: 10m
+                        spec: {}
+                  strategy:
+                    repeat:
+                      items:
+                        - 10%
+                        - 25%
+                        - 50%
+              - stepGroup:
+                  name: Primary Deployment
+                  identifier: primaryDeployment
+                  steps:
+                    - step:
+                        name: Rolling Deployment
+                        identifier: rollingDeployment
+                        type: K8sRollingDeploy
+                        timeout: 10m
+                        spec:
+                          skipDryRun: false
+            rollbackSteps:
+              - step:
+                  name: Canary Delete
+                  identifier: rollbackCanaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  name: Rolling Rollback
+                  identifier: rollingRollback
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+  allowStageExecutions: true

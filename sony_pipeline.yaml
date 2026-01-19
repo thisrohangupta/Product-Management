@@ -1,0 +1,111 @@
+pipeline:
+  name: Remote Pipeline Demo
+  identifier: sony
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: NativeHelm
+          service:
+            serviceRef: helm
+            serviceInputs:
+              serviceDefinition:
+                type: NativeHelm
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: k8sdev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: helmdev
+                inputs:
+                  identifier: helmdev
+                  type: KubernetesDirect
+                  spec:
+                    namespace: dev
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: echo
+                  identifier: echo
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: echo "Hello"
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  name: Helm Rollback
+                  identifier: helmRollback
+                  type: HelmRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: MarkAsFailure
+  notificationRules:
+    - name: Failure
+      identifier: Failure
+      pipelineEvents:
+        - type: PipelineFailed
+        - type: StageFailed
+          forStages:
+            - AllStages
+        - type: StepFailed
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true
+    - name: Success
+      identifier: Success
+      pipelineEvents:
+        - type: PipelineSuccess
+        - type: StageSuccess
+          forStages:
+            - AllStages
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true
+    - name: Job Start Slack Notification
+      identifier: Job_Start_Slack_Notification
+      pipelineEvents:
+        - type: PipelineStart
+      notificationMethod:
+        type: Slack
+        spec:
+          userGroups:
+            - account._account_all_users
+          webhookUrl: ""
+      enabled: true
+  properties:
+    ci:
+      codebase:
+        connectorRef: ThisRohanGupta
+        repoName: Product-Management
+        build: <+input>

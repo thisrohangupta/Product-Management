@@ -1,0 +1,9 @@
+serviceOverrides:
+  environmentRef: staging
+  serviceRef: SSH
+  variables:
+    - name: DB_URL
+      type: String
+      value: qa.harness.io
+  manifests: []
+  configFiles: []

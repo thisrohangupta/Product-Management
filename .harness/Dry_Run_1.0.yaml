@@ -1,0 +1,11 @@
+template:
+  name: Dry Run
+  type: Step
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  spec:
+    type: K8sDryRun
+    spec: {}
+    timeout: 10m
+  identifier: Dry_Run
+  versionLabel: "1.0"

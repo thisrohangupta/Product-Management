@@ -1,0 +1,26 @@
+service:
+  name: k8s
+  identifier: k8s
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff
+  serviceDefinition:
+    spec:
+      artifacts:
+        primary: {}
+      manifests:
+        - manifest:
+            identifier: nginx
+            type: K8sManifest
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: ThisRohanGupta
+                  gitFetchType: Branch
+                  paths:
+                    - cdng/
+                  repoName: Product-Management
+                  branch: main
+              skipResourceVersioning: false
+              enableDeclarativeRollback: false
+    type: Kubernetes

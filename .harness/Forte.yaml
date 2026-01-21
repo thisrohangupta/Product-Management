@@ -66,6 +66,13 @@ pipeline:
                                         - rohan-docker-delegate
                                 timeout: 10m
                                 failureStrategies: []
+                          - step:
+                                type: K8sRollingDeploy
+                                name: deploy
+                                identifier: deploy
+                                spec:
+                                    skipDryRun: false
+                                timeout: 10m
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

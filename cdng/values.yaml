@@ -1,6 +1,6 @@
 name: <+service.name>
 replicas: 1
-image: <+artifact.image>
+image: library/nginx:latest
 
 # Namespace Configuration
 createNamespace: true
@@ -16,7 +16,8 @@ serviceType: LoadBalancer
 servicePort: 80
 serviceTargetPort: 80
 
+
 env:
   config:
-    environment: dev
+    environment: devRel
 

@@ -1,0 +1,169 @@
+template:
+  name: nginx-canary
+  type: Pipeline
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    stages:
+      - stage:
+          name: Deploy
+          identifier: Deploy
+          description: ""
+          type: Deployment
+          spec:
+            deploymentType: Kubernetes
+            service:
+              serviceRef: nginxcanary
+              serviceInputs:
+                serviceDefinition:
+                  type: Kubernetes
+                  spec:
+                    artifacts:
+                      primary:
+                        primaryArtifactRef: <+input>
+                        sources: <+input>
+            environment:
+              environmentRef: <+input>
+              deployToAll: false
+              environmentInputs: <+input>
+              infrastructureDefinitions: <+input>
+            execution:
+              steps:
+                - stepGroup:
+                    name: Canary Deployment
+                    identifier: canaryDepoyment
+                    steps:
+                      - step:
+                          name: Canary Deployment
+                          identifier: canaryDeployment
+                          type: K8sCanaryDeploy
+                          timeout: 10m
+                          spec:
+                            instanceSelection:
+                              type: Count
+                              spec:
+                                count: 1
+                            skipDryRun: false
+                      - step:
+                          type: Http
+                          name: 100 Requests
+                          identifier: _Requests
+                          spec:
+                            method: GET
+                            headers: []
+                            outputVariables: []
+                            url: http://<+serviceVariable.host>
+                          timeout: 10s
+                      - step:
+                          type: HarnessApproval
+                          name: Approve 10 Percent
+                          identifier: Approve_10_Percent
+                          spec:
+                            approvalMessage: Please review the following information and approve the pipeline progression
+                            includePipelineExecutionHistory: true
+                            approvers:
+                              userGroups:
+                                - account.ProductManagement
+                              minimumCount: 1
+                              disallowPipelineExecutor: false
+                            approverInputs: []
+                          timeout: 1d
+                      - step:
+                          type: K8sApply
+                          name: Ten Percent Traffic Shift
+                          identifier: Ten_Percent_Traffic_Shift
+                          spec:
+                            filePaths:
+                              - backend/nginx.yaml
+                            skipDryRun: false
+                            skipSteadyStateCheck: false
+                            skipRendering: false
+                            overrides:
+                              - manifest:
+                                  identifier: Shift10.yaml
+                                  type: Values
+                                  spec:
+                                    store:
+                                      type: Inline
+                                      spec:
+                                        content: |-
+                                          splitTraffic: true
+                                          stableWeight: 90
+                                          canaryWeight: 10
+                          timeout: 10m
+                      - step:
+                          type: HarnessApproval
+                          name: Approve 40 Percent
+                          identifier: Approve_40_Percent
+                          spec:
+                            approvalMessage: Please review the following information and approve the pipeline progression
+                            includePipelineExecutionHistory: true
+                            approvers:
+                              userGroups:
+                                - account.ProductManagement
+                              minimumCount: 1
+                              disallowPipelineExecutor: false
+                            approverInputs: []
+                          timeout: 1d
+                      - step:
+                          type: K8sApply
+                          name: Apply 40 Percent
+                          identifier: Apply_40_Percent
+                          spec:
+                            filePaths:
+                              - backend/nginx.yaml
+                            skipDryRun: false
+                            skipSteadyStateCheck: false
+                            skipRendering: false
+                            overrides:
+                              - manifest:
+                                  identifier: Shift40.yaml
+                                  type: Values
+                                  spec:
+                                    store:
+                                      type: Inline
+                                      spec:
+                                        content: |
+                                          splitTraffic: true
+                                          stableWeight: 60
+                                          canaryWeight: 40
+                          timeout: 10m
+                - stepGroup:
+                    name: Primary Deployment
+                    identifier: primaryDepoyment
+                    steps:
+                      - step:
+                          name: Rolling Deployment
+                          identifier: rollingDeployment
+                          type: K8sRollingDeploy
+                          timeout: 10m
+                          spec:
+                            skipDryRun: false
+                      - step:
+                          name: Canary Delete
+                          identifier: canaryDelete
+                          type: K8sCanaryDelete
+                          timeout: 10m
+                          spec: {}
+              rollbackSteps:
+                - step:
+                    name: Canary Delete
+                    identifier: rollbackCanaryDelete
+                    type: K8sCanaryDelete
+                    timeout: 10m
+                    spec: {}
+                - step:
+                    name: Rolling Rollback
+                    identifier: rollingRollback
+                    type: K8sRollingRollback
+                    timeout: 10m
+                    spec: {}
+          tags: {}
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: StageRollback
+  identifier: nginxcanary
+  versionLabel: 1.0.0

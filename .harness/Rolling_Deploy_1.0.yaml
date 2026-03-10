@@ -1,0 +1,14 @@
+template:
+  name: Rolling Deploy
+  identifier: Rolling_Deploy
+  versionLabel: "1.0"
+  type: Step
+  projectIdentifier: PM_Signoff
+  orgIdentifier: default
+  tags: {}
+  spec:
+    type: K8sRollingDeploy
+    timeout: <+input>
+    spec:
+      skipDryRun: false
+      pruningEnabled: false

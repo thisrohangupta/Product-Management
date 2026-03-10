@@ -1,0 +1,5 @@
+service:
+  name: remoteservice
+  identifier: remoteservice
+  orgIdentifier: default
+  projectIdentifier: TF_Test_Sudar

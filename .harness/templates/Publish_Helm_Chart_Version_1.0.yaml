@@ -1,0 +1,75 @@
+template:
+  name: Publish Helm Chart Version
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    type: ShellScript
+    spec:
+      shell: Bash
+      onDelegate: true
+      source:
+        type: Inline
+        spec:
+          script: |-
+            VERSION=""
+            RELEASE_VERSION=""
+            gitURL=https://${secrets.getValue("scp-harness-gitlab-user")}:${secrets.getValue("scp-harness-gitlab-password")}@gitlab.se-charter.net/scp/${workflow.variables.SUB_GROUP}/${workflow.variables.PROJECT}/${workflow.variables.GIT_REPO}.git
+
+            if [ -z "${workflow.variables.CHART_VERSION}" ] && [ -z "${workflow.variables.GIT_BRANCH_NAME}" ]; then
+               echo "Please specify either a chart version or branch name"
+            exit 1
+            fi  
+
+            if [ -z "${workflow.variables.CHART_VERSION}" ]; then
+               branchExists=$(git ls-remote --heads $gitURL  | wc -l)
+              if [ "${branchExists}" = "0" ]; then
+                echo "Could not find branch ${workflow.variables.GIT_BRANCH_NAME} please specify a branch that exists"
+                exit 1
+              fi
+              rm -rf ${workflow.variables.GIT_REPO}
+
+              git clone --single-branch --branch ${workflow.variables.GIT_BRANCH_NAME} $gitURL
+
+              apt-get install -y software-properties-common
+              add-apt-repository -y ppa:rmescandon/yq
+              apt-get install -y yq
+
+              cd ${workflow.variables.GIT_REPO}
+              
+              # CHART_VERSION=$(yq r Chart.yaml version)
+              #test=$(yq r Chart.yaml version)
+              #VERSION=$(yq r Chart.yaml version)
+              test=$(yq e '.version' Chart.yaml )
+              VERSION=$(yq e '.version' Chart.yaml )
+            else
+              VERSION=${workflow.variables.CHART_VERSION}
+            fi
+
+
+
+            if [ -z "$VERSION" ]; then
+              echo "Did not find a chart version please review if this is the correct release branch ${workflow.variables.GIT_BRANCH_NAME} or specify chart version"
+              exit 1
+            fi
+
+            export CHART_VERSION=${VERSION}
+            export RELEASE_VERSION=$(echo ${VERSION} | cut -f1,2 -d.)
+            echo "Chart Version"
+            echo ${VERSION}
+            echo "Release Version"
+            echo $RELEASE_VERSION
+      environmentVariables: []
+      outputVariables:
+        - name: CHART_VERSION
+          type: String
+          value: CHART_VERSION
+        - name: RELEASE_VERSION
+          type: String
+          value: RELEASE_VERSION
+    timeout: 10m
+    when:
+      stageStatus: Success
+      condition: <+input>
+  identifier: Publish_Helm_Chart_Version
+  versionLabel: "1.0"

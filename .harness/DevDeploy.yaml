@@ -1,0 +1,36 @@
+inputSet:
+  identifier: "DevDeploy"
+  name: "DevDeploy"
+  orgIdentifier: "default"
+  projectIdentifier: "Rohan"
+  pipeline:
+    identifier: "Charles"
+    stages:
+    - stage:
+        identifier: "Deploy"
+        type: "Deployment"
+        spec:
+          service:
+            serviceRef: "nginxcanary"
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: "nginx"
+                      sources:
+                      - identifier: "nginx"
+                        type: "DockerRegistry"
+                        spec:
+                          tag: "stable-perl"
+          environments:
+            values:
+            - infrastructureDefinitions:
+              - identifier: "productstaging"
+                inputs:
+                  identifier: "productstaging"
+                  type: "KubernetesDirect"
+                  spec:
+                    namespace: "dev"
+              environmentRef: "staging"

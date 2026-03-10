@@ -1,0 +1,13 @@
+template:
+  name: Helm Deployment
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    type: HelmDeploy
+    timeout: 10m
+    spec:
+      skipDryRun: false
+      ignoreReleaseHistFailStatus: false
+  identifier: Helm_Deployment
+  versionLabel: "1.0"

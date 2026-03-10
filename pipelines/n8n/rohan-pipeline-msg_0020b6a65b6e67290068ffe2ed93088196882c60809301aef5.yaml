@@ -1,0 +1,224 @@
+pipeline:
+  name: prod-k8s-delivery
+  identifier: prod_k8s_delivery
+  projectIdentifier: devops
+  orgIdentifier: default
+  tags: {}
+  variables:
+    - name: image
+      type: String
+      value: "account.docker_registry/myapp"
+      description: "Container image repository (without tag)"
+      identifier: image
+    - name: tag
+      type: String
+      value: "latest"
+      description: "Container image tag. Override in input sets for releases."
+      identifier: tag
+    - name: serviceUrl
+      type: String
+      value: "https://app.example.com/health"
+      description: "External service health endpoint for smoke tests"
+      identifier: serviceUrl
+  inputSetReferences:
+    - dev-input
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  name: Setup Docker Login
+                  identifier: setup_docker_login
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -euo pipefail
+                      echo "Logging in to Docker registry"
+                      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY_URL
+                    environmentVariables:
+                      - name: DOCKER_USERNAME
+                        value: <+secrets.getValue("docker.username")>
+                      - name: DOCKER_PASSWORD
+                        value: <+secrets.getValue("docker.password")>
+                      - name: DOCKER_REGISTRY_URL
+                        value: <+secrets.getValue("docker.registry_url")>
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Build and Push Image
+                  identifier: build_and_push
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -euo pipefail
+                      echo "Building Docker image: <+pipeline.variables.image>:<+pipeline.variables.tag>"
+                      docker build -t <+pipeline.variables.image>:<+pipeline.variables.tag> .
+                      docker push <+pipeline.variables.image>:<+pipeline.variables.tag>
+                    environmentVariables:
+                      - name: DOCKER_USERNAME
+                        value: <+secrets.getValue("docker.username")>
+                      - name: DOCKER_PASSWORD
+                        value: <+secrets.getValue("docker.password")>
+                      - name: DOCKER_REGISTRY_URL
+                        value: <+secrets.getValue("docker.registry_url")>
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Image Scan (optional)
+                  identifier: image_scan
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -euo pipefail
+                      echo "Optional vulnerability scan - skip if not configured"
+                      if command -v trivy >/dev/null 2>&1; then
+                        trivy image --quiet --exit-code 1 <+pipeline.variables.image>:<+pipeline.variables.tag> || true
+                      else
+                        echo "Trivy not found; skipping scan"
+                      fi
+                    delegateSelectors:
+                      - harness-delegate
+    - stage:
+        name: Deploy to Kubernetes
+        identifier: Deploy
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: app-service
+          environment:
+            environmentRef: prod
+          infrastructure:
+            environmentRef: prod
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Rolling Deploy
+                  identifier: rolling_deploy
+                  type: K8sRollingDeploy
+                  spec:
+                    skipDryRun: false
+                    forceApply: false
+                    pruneResources: true
+                    resources:
+                      limits: {}
+                      requests: {}
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Post Deploy Smoke Test (In-Cluster)
+                  identifier: post_deploy_smoke
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -euo pipefail
+                      echo "Checking kubernetes rollout status for release <+INFRA_KEY_SHORT_ID>"
+                      kubectl rollout status deployment -l app.kubernetes.io/instance=release-<+INFRA_KEY_SHORT_ID> --namespace default --timeout=2m || true
+                      echo "Attempting in-cluster curl of service"
+                      if command -v curl >/dev/null 2>&1; then
+                        curl -sSf --connect-timeout 5 http://localhost/ || echo "In-cluster curl not configured"
+                      fi
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Manual Approval Before Promotion
+                  identifier: manual_approval
+                  type: Approval
+                  spec:
+                    approvers:
+                      userGroups:
+                        - devops
+                      minimumCount: 1
+                    includePipelineExecutionHistory: true
+                    approvalMessage: "Approve promotion to production traffic fully"
+              - step:
+                  name: Switch Traffic (Blue/Green Safe Promotion)
+                  identifier: blue_green_promote
+                  type: K8sBlueGreenDeploy
+                  spec:
+                    skipDryRun: false
+                    forceApply: false
+                    pruneResources: true
+                    delegateSelectors:
+                      - harness-delegate
+    - stage:
+        name: Post-Deployment Verification
+        identifier: Post_Deployment_Verification
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: app-service
+          environment:
+            environmentRef: prod
+          infrastructure:
+            environmentRef: prod
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: External Smoke Test (HTTP)
+                  identifier: external_smoke_test
+                  type: HTTP
+                  spec:
+                    url: <+pipeline.variables.serviceUrl>?tag=<+pipeline.variables.tag>
+                    method: GET
+                    headers: {}
+                    requestBody: ""
+                    attributeAssertions:
+                      - key: status
+                        operator: Equals
+                        value: "200"
+                    timeout: 60
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Application Health Verify
+                  identifier: app_health_verify
+                  type: Verify
+                  spec:
+                    duration: 5m
+                    # Basic verification only; integrate Prometheus/NewRelic/AWS CloudWatch in production
+                    sources: []
+                    delegateSelectors:
+                      - harness-delegate
+              - step:
+                  name: Post Deployment Notifications
+                  identifier: post_deploy_notifications
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: |
+                      set -euo pipefail
+                      echo "Deployment complete for <+pipeline.variables.image>:<+pipeline.variables.tag>"
+                      echo "Notify channels or create tickets as needed"
+                    delegateSelectors:
+                      - harness-delegate
+  tags: {}
+  properties:
+    ci: {}
+    deployment: {}

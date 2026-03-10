@@ -1,0 +1,65 @@
+template:
+  name: Notify Rollback
+  type: Step
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  spec:
+    type: ShellScript
+    spec:
+      shell: Bash
+      onDelegate: true
+      source:
+        type: Inline
+        spec:
+          script: |-
+
+            #!/bin/bash
+            rm -rf utils
+            git clone --single-branch --branch master 'https://${secrets.getValue("xg_gitlab_username")}:${secrets.getValue("xg_gitlab_password")}@gitlab.spectrumflow.net/scp/scpdevops/cicd/utils.git'
+
+            cd utils/webex
+
+            trigger_message() {
+              python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+            }
+
+
+            env_int="${published_name_int.approvedBy.name}"
+            env_perf="${published_name_perf.approvedBy.name}"
+            env_stage="${published_name_stage.approvedBy.name}"
+            env_prod="${published_name_prod.approvedBy.name}"
+
+                                                                    
+            if [ -n "${env_int}" ] && [ "${context.canary.INFRA_NAME}" == "integration" ]; then
+              python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_INT_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+              elif [ -n "${env_perf}" ] && [ "${context.canary.INFRA_NAME}" == "perf" ]; then
+                  python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PERF_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+              elif [ -n "${env_stage}" ] && [ "${context.canary.INFRA_NAME}" == "stage" ]; then
+                  python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_STAGE_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+              elif [ -n "${env_prod}" ] && [ "${context.canary.INFRA_NAME}" == "prod" ]; then
+                  python3 post_message.py -a "${app.name}" -p "${app.defaults.DEPLOYMENT_PLAIN_TEXT}" -m "${app.defaults.DEPLOYMENT_MARKDOWN_PROD_ROLLBACK}" -w "${secrets.getValue("webexBotToken")}"
+            else
+              if [[ -z "${published_name_int}" ]]; then
+                echo "*****************"
+                trigger_message
+                echo "*****************"
+
+              elif [[ -z "${published_name_perf}" ]]; then
+                echo "*****************"
+                trigger_message
+                echo "*****************"
+              elif [[ -z "${published_name_stage}" ]]; then
+                echo "*****************"
+                trigger_message
+                echo "*****************"
+              elif [[ -z "${published_name_prod}" ]]; then
+                echo "*****************"
+                trigger_message
+                echo "*****************"
+             fi
+            fi
+      environmentVariables: []
+      outputVariables: []
+    timeout: 10m
+  identifier: Notify_Rollback
+  versionLabel: "1.0"

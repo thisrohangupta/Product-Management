@@ -1,0 +1,28 @@
+service:
+  name: tanzu
+  identifier: tanzu
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: dev
+            type: TasManifest
+            spec:
+              cfCliVersion: V7
+              store:
+                type: ArtifactBundle
+                spec:
+                  manifestPath: /some/path
+                  deployableUnitPath: /some/path
+                  artifactBundleType: ZIP
+              varsPaths:
+                - <+serviceVariable.varPath>
+      variables:
+        - name: varPath
+          type: String
+          description: base vars path for service
+          required: false
+          value: /dev/vars.yaml
+    type: TAS

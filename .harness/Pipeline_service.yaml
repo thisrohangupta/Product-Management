@@ -1,0 +1,60 @@
+pipeline:
+  name: Pipeline service
+  identifier: Pipeline_service
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: pipelinenginx
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: staging
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: productstaging
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: Shell Script
+                  identifier: Shell_Script
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    source:
+                      type: Inline
+                      spec:
+                        script: <+service.name>
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

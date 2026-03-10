@@ -1,0 +1,75 @@
+pipeline:
+  name: Charter Template
+  identifier: Charter_Template
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        template:
+          templateRef: WinRM_Primary_Release
+          versionLabel: "1.0"
+          templateInputs:
+            type: Deployment
+            spec:
+              service:
+                serviceRef: <+input>
+                serviceInputs: <+input>
+              environment:
+                environmentRef: <+input>
+                environmentInputs: <+input>
+                infrastructureDefinitions: <+input>
+              execution:
+                steps:
+                  - stepGroup:
+                      identifier: Deploy_Containers
+                      steps:
+                        - step:
+                            identifier: Fetch_EWS_Creds
+                            template:
+                              templateInputs:
+                                type: ShellScript
+                                when:
+                                  condition: <+input>
+            variables:
+              - name: CHART_VERSION
+                type: String
+                value: <+input>
+              - name: DEPLOYMENT_NOTIFICATION_EMAILS
+                type: String
+                value: <+input>
+              - name: GIT_BRANCH_NAME
+                type: String
+                value: <+serviceVariable.branch>
+              - name: ENV
+                type: String
+                value: <+env.name>
+              - name: AWS_ROLE
+                type: String
+                value: <+input>
+              - name: CANARY_NAMESPACE
+                type: String
+                value: <+input>
+              - name: ENABLE_CANARY_INT
+                type: String
+                value: <+input>
+              - name: ENABLE_CANARY_PERF
+                type: String
+                value: <+input>
+              - name: ENABLE_CANARY_STAGE
+                type: String
+                value: <+input>
+              - name: ENABLE_CANARY_PROD
+                type: String
+                value: <+input>
+              - name: CLUSTER_TAG
+                type: String
+                value: <+input>
+              - name: K8S_CLUSTER_ID
+                type: String
+                value: <+input>
+              - name: previous_chart_version
+                type: String
+                value: <+input>

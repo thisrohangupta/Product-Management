@@ -1,0 +1,60 @@
+pipeline:
+  name: Charles
+  identifier: Charles
+  projectIdentifier: Rohan
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: <+input>
+            serviceInputs: <+input>
+          execution:
+            steps:
+              - step:
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+                    pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+          environments:
+            metadata:
+              parallel: false
+            values:
+              - environmentRef: staging
+                deployToAll: false
+                infrastructureDefinitions:
+                  - identifier: productstaging
+                    inputs:
+                      identifier: productstaging
+                      type: KubernetesDirect
+                      spec:
+                        namespace: <+input>.allowedValues(dev,qa,prod)
+              - environmentRef: L1
+                deployToAll: false
+                infrastructureDefinitions:
+                  - identifier: L1
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+  allowStageExecutions: true

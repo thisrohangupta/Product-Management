@@ -1,0 +1,29 @@
+inputSet:
+  name: dev
+  identifier: dev
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff
+  pipeline:
+    identifier: sony
+    stages:
+      - stage:
+          identifier: Deploy
+          type: Deployment
+          spec:
+            service:
+              serviceInputs:
+                serviceDefinition:
+                  type: NativeHelm
+                  spec:
+                    artifacts:
+                      primary:
+                        primaryArtifactRef: nginx
+                        sources:
+                          - identifier: nginx
+                            type: DockerRegistry
+                            spec:
+                              tag: <+input>.executionInput()
+    properties:
+      ci:
+        codebase:
+          build: <+input>

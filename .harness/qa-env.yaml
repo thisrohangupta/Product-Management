@@ -1,0 +1,8 @@
+environment:
+  name: stage
+  identifier: stage
+  description: ""
+  tags: {}
+  type: PreProduction
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff

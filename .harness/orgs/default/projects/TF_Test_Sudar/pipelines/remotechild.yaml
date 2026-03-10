@@ -1,0 +1,33 @@
+pipeline:
+  name: remotechild
+  identifier: remotechild
+  tags: {}
+  projectIdentifier: TF_Test_Sudar
+  orgIdentifier: default
+  stages:
+    - stage:
+        name: approval
+        identifier: approval
+        description: ""
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  name: test
+                  identifier: test
+                  type: HarnessApproval
+                  timeout: 1d
+                  spec:
+                    approvalMessage: |-
+                      Please review the following information
+                      and approve the pipeline progression
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                      userGroups:
+                        - account.CD_PM
+                    isAutoRejectEnabled: false
+                    approverInputs: []
+        tags: {}

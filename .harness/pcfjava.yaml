@@ -1,0 +1,5 @@
+service:
+  name: pcf-java
+  identifier: pcfjava
+  orgIdentifier: default
+  projectIdentifier: PM_Signoff

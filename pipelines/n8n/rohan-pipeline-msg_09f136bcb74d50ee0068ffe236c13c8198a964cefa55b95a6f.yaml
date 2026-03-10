@@ -1,0 +1,183 @@
+pipeline:
+  name: microservice-k8s-pipeline
+  identifier: microservice_k8s_pipeline
+  projectIdentifier: sample-project
+  orgIdentifier: default
+  tags: {}
+  inputSetReferences: []
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  name: Install Dependencies
+                  identifier: install_dependencies
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: npm ci
+              - step:
+                  name: Run Unit Tests
+                  identifier: run_unit_tests
+                  type: Run
+                  spec:
+                    shell: Sh
+                    command: npm test
+              - step:
+                  name: Build Artifact and Docker Image
+                  identifier: build_image
+                  type: Run
+                  spec:
+                    shell: Bash
+                    command: |
+                      set -e
+                      export IMAGE_NAME="sample-app"
+                      export IMAGE_TAG="$(date +%s)"
+                      echo "Building Docker image ${IMAGE_NAME}:${IMAGE_TAG}"
+                      docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                      # Login and push are expected to use connector credentials on delegate in real setup
+                      # Use Harness-managed connector for secure push in production pipelines
+                      echo "IMAGE=${IMAGE_NAME}:${IMAGE_TAG}" > /tmp/buildmeta.properties
+              - step:
+                  name: Publish Build Metadata
+                  identifier: publish_build_metadata
+                  type: Run
+                  spec:
+                    shell: Bash
+                    command: |
+                      set -e
+                      if [ -f /tmp/buildmeta.properties ]; then
+                        cat /tmp/buildmeta.properties
+                      fi
+    - stage:
+        name: Deploy to Dev
+        identifier: Deploy_Dev
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: microservice_service
+          environment:
+            environmentRef: dev
+          infrastructure:
+            environmentRef: dev
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Rolling Deploy to Dev
+                  identifier: rolling_deploy_dev
+                  type: K8sRollingDeploy
+                  spec: {}
+              - step:
+                  name: Post-deploy Health Check
+                  identifier: post_deploy_health_check_dev
+                  type: Http
+                  spec:
+                    request:
+                      method: GET
+                      url: http://sample-service.default.svc.cluster.local/health
+                      timeout: 30s
+                    response:
+                      matchers:
+                        - type: StatusCode
+                          spec:
+                            comparison: Equals
+                            value: '200'
+              - step:
+                  name: Run Integration Smoke Tests
+                  identifier: integration_smoke_tests_dev
+                  type: ShellScript
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    delegateSelectors:
+                      - harness-delegate
+                    command: |
+                      set -e
+                      echo "Running integration smoke tests against Dev"
+                      curl -fsS http://sample-service.default.svc.cluster.local/health
+                      echo "Smoke tests passed"
+              - step:
+                  name: Manual Approval - Promote to Prod
+                  identifier: manual_approval_promote
+                  type: Approval
+                  spec:
+                    approvalMessage: "Approve promotion of this release to production"
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                      users:
+                        - deploy-approver@example.com
+                    timeout: 2h
+    - stage:
+        name: Deploy to Prod (BlueGreen)
+        identifier: Deploy_Prod
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: microservice_service
+          environment:
+            environmentRef: prod
+          infrastructure:
+            environmentRef: prod
+            infrastructureDefinition:
+              type: KubernetesDirect
+              spec:
+                connectorRef: account.k8s_connector
+                namespace: default
+                releaseName: release-<+INFRA_KEY_SHORT_ID>
+                delegateSelectors:
+                  - harness-delegate
+          execution:
+            steps:
+              - step:
+                  name: Blue-Green Deploy to Prod
+                  identifier: blue_green_deploy_prod
+                  type: K8sBlueGreenDeploy
+                  spec: {}
+              - step:
+                  name: Prod Health Check
+                  identifier: prod_health_check
+                  type: Http
+                  spec:
+                    request:
+                      method: GET
+                      url: https://sample-service.example.com/health
+                      timeout: 30s
+                    response:
+                      matchers:
+                        - type: StatusCode
+                          spec:
+                            comparison: Equals
+                            value: '200'
+              - step:
+                  name: Run Post-deploy Verification
+                  identifier: post_deploy_verification_prod
+                  type: ShellScript
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    delegateSelectors:
+                      - harness-delegate
+                    command: |
+                      set -e
+                      echo "Running post-deploy verification against Prod"
+                      curl -fsS https://sample-service.example.com/health
+                      # Add smoke/integration tests as needed
+                      echo "Post-deploy verification completed"
+  properties:
+    runSequenceOnlyOnSuccess: true

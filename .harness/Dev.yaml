@@ -1,0 +1,47 @@
+inputSet:
+  identifier: "Dev"
+  name: "Dev"
+  orgIdentifier: "default"
+  projectIdentifier: "Rohan"
+  pipeline:
+    identifier: "CDNG_Demo_Pipeline"
+    stages:
+    - stage:
+        identifier: "Deploy_to_Dev"
+        type: "Deployment"
+        spec:
+          service:
+            serviceInputs:
+              serviceDefinition:
+                type: "Kubernetes"
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: "ng"
+          environment:
+            environmentRef: "staging"
+            infrastructureDefinitions:
+            - identifier: "productstaging"
+    - stage:
+        identifier: "Deploy_to_Prod"
+        template:
+          templateInputs:
+            type: "Deployment"
+            spec:
+              service:
+                serviceInputs:
+                  serviceDefinition:
+                    type: "Kubernetes"
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: "nginx"
+                          sources:
+                          - identifier: "nginx"
+                            type: "DockerRegistry"
+                            spec:
+                              tag: "stable-perl"
+              environment:
+                environmentRef: "staging"
+                infrastructureDefinitions:
+                - identifier: "productstaging"

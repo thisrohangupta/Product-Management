@@ -47,25 +47,12 @@ pipeline:
                   execution:
                       steps:
                           - step:
-                                type: ShellScript
-                                name: print
-                                identifier: print
+                                type: K8sRollingDeploy
+                                name: Rolling
+                                identifier: Rolling
                                 spec:
-                                    shell: Bash
-                                    onDelegate: true
-                                    source:
-                                        type: Inline
-                                        spec:
-                                            script: |-
-                                                echo <+pipeline.variables.deployment_number>
-                                                echo <+pipeline.variables.namespace>
-                                    environmentVariables: []
-                                    outputVariables: []
-                                    executionTarget: {}
-                                    delegateSelectors:
-                                        - rohan-docker-delegate
+                                    skipDryRun: false
                                 timeout: 10m
-                                failureStrategies: []
                       rollbackSteps:
                           - step:
                                 name: Rollback Rollout Deployment

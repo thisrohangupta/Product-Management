@@ -11,8 +11,14 @@ pipeline:
             type: Deployment
             spec:
               service:
-                serviceRef: <+input>
-                serviceInputs: <+input>
+                serviceRef: nginxk8s
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: ng
   tags: {}
   projectIdentifier: Rohan
   orgIdentifier: default
